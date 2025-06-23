@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pruebas de Autenticación - ElectroGalíndez</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --success: #10b981;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --light: #f8fafc;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f1f5f9;
+            color: var(--dark);
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        header {
+            background: var(--dark);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+        
+        .subtitle {
+            opacity: 0.8;
+            font-size: 1rem;
+        }
+        
+        .tabs {
+            display: flex;
+            background: #e2e8f0;
+            border-bottom: 1px solid #cbd5e1;
+        }
+        
+        .tab {
+            padding: 15px 20px;
+            cursor: pointer;
+            flex: 1;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            background: white;
+            font-weight: bold;
+            border-bottom: 3px solid var(--primary);
+        }
+        
+        .tab-content {
+            padding: 25px;
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+        
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: 100%;
+        }
+        
+        button:hover {
+            background: #1d4ed8;
+        }
+        
+        .btn-success {
+            background: var(--success);
+        }
+        
+        .btn-success:hover {
+            background: #059669;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+        }
+        
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        
+        .result {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 6px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            max-height: 300px;
+            overflow: auto;
+        }
+        
+        .result-title {
+            font-weight: 500;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+        
+        pre {
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        
+        .token-display {
+            word-break: break-all;
+            font-size: 0.8rem;
+            background: #f1f5f9;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        
+        .status.success {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .status.error {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .instructions {
+            background: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .instructions h3 {
+            margin-bottom: 8px;
+            color: #b45309;
+        }
+        
+        @media (max-width: 600px) {
+            .tabs {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ElectroGalíndez</h1>
+            <div class="subtitle">Panel de Pruebas de Autenticación</div>
+        </header>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="register">Registro</div>
+            <div class="tab" data-tab="login">Login</div>
+            <div class="tab" data-tab="profile">Perfil</div>
+            <div class="tab" data-tab="password">Recuperar Contraseña</div>
+        </div>
+        
+        <!-- Pestaña de Registro -->
+        <div class="tab-content active" id="register-tab">
+            <div class="instructions">
+                <h3>Prueba de Registro de Usuario</h3>
+                <p>Completa el formulario para crear una nueva cuenta de cliente o administrador.</p>
+            </div>
+            
+            <div class="form-group">
+                <label for="register-email">Email:</label>
+                <input type="email" id="register-email" placeholder="tu@email.com">
+            </div>
+            
+            <div class="form-group">
+                <label for="register-password">Contraseña (mínimo 8 caracteres):</label>
+                <input type="password" id="register-password" placeholder="••••••••">
+            </div>
+            
+            <div class="form-group">
+                <label for="register-role">Rol:</label>
+                <select id="register-role">
+                    <option value="customer">Cliente</option>
+                    <option value="admin">Administrador</option>
+                </select>
+            </div>
+            
+            <button id="register-btn">Registrarse</button>
+            
+            <div class="result" id="register-result">
+                <div class="result-title">Resultado del Registro:</div>
+                <pre id="register-output">Esperando acción...</pre>
+                <div id="register-status" class="status hidden"></div>
+            </div>
+        </div>
+        
+        <!-- Pestaña de Login -->
+        <div class="tab-content" id="login-tab">
+            <div class="instructions">
+                <h3>Prueba de Inicio de Sesión</h3>
+                <p>Ingresa las credenciales de un usuario registrado para iniciar sesión.</p>
+            </div>
+            
+            <div class="form-group">
+                <label for="login-email">Email:</label>
+                <input type="email" id="login-email" placeholder="tu@email.com">
+            </div>
+            
+            <div class="form-group">
+                <label for="login-password">Contraseña:</label>
+                <input type="password" id="login-password" placeholder="••••••••">
+            </div>
+            
+            <button id="login-btn">Iniciar Sesión</button>
+            
+            <div class="result" id="login-result">
+                <div class="result-title">Resultado del Login:</div>
+                <pre id="login-output">Esperando acción...</pre>
+                <div id="login-status" class="status hidden"></div>
+                <div class="token-display hidden" id="token-display">
+                    <strong>Token JWT:</strong> <span id="token-value"></span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Pestaña de Perfil -->
+        <div class="tab-content" id="profile-tab">
+            <div class="instructions">
+                <h3>Prueba de Perfil de Usuario</h3>
+                <p>Obtén la información del perfil del usuario autenticado.</p>
+                <p>Requieres un token JWT válido (obtenido en Login).</p>
+            </div>
+            
+            <div class="form-group">
+                <label for="profile-token">Token JWT:</label>
+                <input type="text" id="profile-token" placeholder="Pega tu token aquí o usa el del login">
+            </div>
+            
+            <button id="profile-btn">Obtener Perfil</button>
+            
+            <div class="result" id="profile-result">
+                <div class="result-title">Información del Perfil:</div>
+                <pre id="profile-output">Esperando acción...</pre>
+                <div id="profile-status" class="status hidden"></div>
+            </div>
+        </div>
+        
+        <!-- Pestaña de Recuperación de Contraseña -->
+        <div class="tab-content" id="password-tab">
+            <div class="instructions">
+                <h3>Prueba de Recuperación de Contraseña</h3>
+                <p>Simula el proceso de recuperación de contraseña.</p>
+            </div>
+            
+            <div class="form-group">
+                <label for="forgot-email">Email:</label>
+                <input type="email" id="forgot-email" placeholder="tu@email.com">
+            </div>
+            
+            <button id="forgot-btn">Enviar Instrucciones</button>
+            
+            <div class="result" id="forgot-result">
+                <div class="result-title">Resultado:</div>
+                <pre id="forgot-output">Esperando acción...</pre>
+                <div id="forgot-status" class="status hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuración
+        const API_BASE_URL = 'http://localhost:5432/api/auth';
+        
+        // Elementos del DOM
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const registerBtn = document.getElementById('register-btn');
+        const loginBtn = document.getElementById('login-btn');
+        const profileBtn = document.getElementById('profile-btn');
+        const forgotBtn = document.getElementById('forgot-btn');
+        
+        // Cambiar pestañas
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remover clase active de todas las pestañas y contenidos
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                
+                // Agregar clase active a la pestaña seleccionada
+                tab.classList.add('active');
+                
+                // Mostrar el contenido correspondiente
+                const tabId = tab.getAttribute('data-tab');
+                document.getElementById(`${tabId}-tab`).classList.add('active');
+            });
+        });
+        
+        // Función para mostrar resultados
+        function showResult(outputId, result, statusId = null, isSuccess = true) {
+            const outputElement = document.getElementById(outputId);
+            outputElement.textContent = JSON.stringify(result, null, 2);
+            
+            if (statusId) {
+                const statusElement = document.getElementById(statusId);
+                statusElement.textContent = isSuccess ? 'ÉXITO' : 'ERROR';
+                statusElement.className = `status ${isSuccess ? 'success' : 'error'}`;
+                statusElement.classList.remove('hidden');
+            }
+        }
+        
+        // Función para hacer solicitudes
+        async function makeRequest(url, method, body = null, token = null) {
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            
+            const options = {
+                method,
+                headers
+            };
+            
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+            
+            try {
+                const response = await fetch(url, options);
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.message || 'Error en la solicitud');
+                }
+                
+                return data;
+            } catch (error) {
+                throw error;
+            }
+        }
+        
+        // Manejar registro
+        registerBtn.addEventListener('click', async () => {
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const role = document.getElementById('register-role').value;
+            
+            if (!email || !password) {
+                showResult('register-output', { error: 'Email y contraseña son requeridos' }, 'register-status', false);
+                return;
+            }
+            
+            if (password.length < 8) {
+                showResult('register-output', { error: 'La contraseña debe tener al menos 8 caracteres' }, 'register-status', false);
+                return;
+            }
+            
+            try {
+                const result = await makeRequest(`${API_BASE_URL}/register`, 'POST', {
+                    email,
+                    password,
+                    role
+                });
+                
+                showResult('register-output', result, 'register-status', true);
+            } catch (error) {
+                showResult('register-output', { error: error.message }, 'register-status', false);
+            }
+        });
+        
+        // Manejar login
+        loginBtn.addEventListener('click', async () => {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            
+            if (!email || !password) {
+                showResult('login-output', { error: 'Email y contraseña son requeridos' }, 'login-status', false);
+                return;
+            }
+            
+            try {
+                const result = await makeRequest(`${API_BASE_URL}/login`, 'POST', {
+                    email,
+                    password
+                });
+                
+                showResult('login-output', result, 'login-status', true);
+                
+                // Mostrar token
+                if (result.token) {
+                    document.getElementById('token-value').textContent = result.token;
+                    document.getElementById('token-display').classList.remove('hidden');
+                    document.getElementById('profile-token').value = result.token;
+                }
+            } catch (error) {
+                showResult('login-output', { error: error.message }, 'login-status', false);
+                document.getElementById('token-display').classList.add('hidden');
+            }
+        });
+        
+        // Manejar obtención de perfil
+        profileBtn.addEventListener('click', async () => {
+            const token = document.getElementById('profile-token').value;
+            
+            if (!token) {
+                showResult('profile-output', { error: 'Token JWT requerido' }, 'profile-status', false);
+                return;
+            }
+            
+            try {
+                const result = await makeRequest(`${API_BASE_URL}/profile`, 'GET', null, token);
+                showResult('profile-output', result, 'profile-status', true);
+            } catch (error) {
+                showResult('profile-output', { error: error.message }, 'profile-status', false);
+            }
+        });
+        
+        // Manejar recuperación de contraseña
+        forgotBtn.addEventListener('click', async () => {
+            const email = document.getElementById('forgot-email').value;
+            
+            if (!email) {
+                showResult('forgot-output', { error: 'Email requerido' }, 'forgot-status', false);
+                return;
+            }
+            
+            try {
+                const result = await makeRequest(`${API_BASE_URL}/forgot-password`, 'POST', {
+                    email
+                });
+                
+                showResult('forgot-output', result, 'forgot-status', true);
+            } catch (error) {
+                showResult('forgot-output', { error: error.message }, 'forgot-status', false);
+            }
+        });
+    </script>
+</body>
+</html>

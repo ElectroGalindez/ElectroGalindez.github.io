@@ -1,44 +1,64 @@
+// server.js
 require('dotenv').config();
 const express = require('express');
 const app = express();
 const cors = require('cors');
 
-// Middlewares
+// Configuración básica
+const PORT = process.env.PORT || 4000;
+
+// Middlewares esenciales
 app.use(cors());
 app.use(express.json());
 
-// Rutas
-app.use('/auth', require('./routes/authRoutes'));
-app.use('/products', require('./routes/productRoutes'));
-app.use('/cart', require('./routes/cartRoutes'));
-app.use('/admin', require('./routes/adminRoutes'));  // Esta línea debe estar presente
-
-// Ruta de prueba
+// Ruta de prueba obligatoria
 app.get('/', (req, res) => {
-  res.send('Backend funcionando!');
+  res.send('¡Backend de ElectroGalíndez funcionando correctamente!');
+});
+
+// Ruta de registro de prueba
+app.post('/api/auth/register', (req, res) => {
+  console.log('✅ Petición de registro recibida:', req.body);
+  res.json({ 
+    status: 'success',
+    message: 'Registro simulado exitoso',
+    data: {
+      email: req.body.email,
+      id: Math.floor(Math.random() * 1000)
+    }
+  });
 });
 
 // Manejo de errores
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send('Algo salió mal!');
+  console.error('🔥 Error:', err);
+  res.status(500).json({ error: 'Error interno del servidor' });
 });
 
-app.get('/check-admin', async (req, res) => {
-  try {
-    const result = await pool.query(
-      "SELECT id, email, role FROM users WHERE role = 'admin'"
-    );
-    res.json(result.rows);
-  } catch (error) {
-    console.error('Error verificando admins:', error);
-    res.status(500).json({ error: 'Error en el servidor' });
+// Función para obtener IP local
+function getIPAddress() {
+  const interfaces = require('os').networkInterfaces();
+  for (const name in interfaces) {
+    for (const interface of interfaces[name]) {
+      if (interface.family === 'IPv4' && !interface.internal) {
+        return interface.address;
+      }
+    }
   }
-});
+  return 'localhost';
+}
 
-// Iniciar servidor
-const PORT = process.env.PORT || 4000
-app.listen(PORT, () => {
-  console.log(`Servidor corriendo en puerto ${PORT}`);
-});
-
+// Iniciar servidor con verificación
+try {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`\n✅✅✅ Servidor backend ACTIVO en puerto ${PORT} ✅✅✅`);
+    console.log(`🔗 Acceso local: http://localhost:${PORT}`);
+    console.log(`🌐 Acceso desde red: http://${getIPAddress()}:${PORT}`);
+    console.log('\nEndpoints disponibles:');
+    console.log(`- GET  /             → Verificar estado del servidor`);
+    console.log(`- POST /api/auth/register → Registrar usuario (prueba)`);
+  });
+} catch (error) {
+  console.error('❌❌❌ Error crítico al iniciar servidor:', error);
+  process.exit(1);
+}
