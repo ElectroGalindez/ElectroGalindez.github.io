@@ -1,0 +1,28 @@
+{
+  "name": "electrogalindez.github.io",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ElectroGalindez/ElectroGalindez.github.io.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ElectroGalindez/ElectroGalindez.github.io/issues"
+  },
+  "homepage": "https://github.com/ElectroGalindez/ElectroGalindez.github.io#readme",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.16.2",
+    "stripe": "^18.2.1"
+  }
+}

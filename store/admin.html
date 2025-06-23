@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electro. Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- NUEVO: Sidebar desplegable con iconos -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <button class="toggle-btn">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="logo">Electro.</div>
+        </div>
+        
+        <div class="sidebar-menu">
+            <a href="#" class="menu-item active">
+                <i class="fas fa-home"></i>
+                <span>Inicio</span>
+            </a>
+            <a href="#" class="menu-item">
+                <i class="fas fa-store"></i>
+                <span>Tienda</span>
+            </a>
+            <a href="#" class="menu-item">
+                <i class="fas fa-tags"></i>
+                <span>Ofertas</span>
+            </a>
+            <a href="#" class="menu-item">
+                <i class="fas fa-th-large"></i>
+                <span>Categorías</span>
+            </a>
+            <a href="#" class="menu-item">
+                <i class="fas fa-chart-line"></i>
+                <span>Reportes</span>
+            </a>
+            <a href="#" class="menu-item">
+                <i class="fas fa-users"></i>
+                <span>Clientes</span>
+            </a>
+            <a href="#" class="menu-item">
+                <i class="fas fa-cog"></i>
+                <span>Configuración</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- NUEVO: Botón para menú móvil -->
+    <button class="mobile-menu-btn">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="main-content">
+        <!-- CORRECCIÓN: Cabecera mejorada con gradiente -->
+        <div class="header">
+            <div class="top-nav">
+                <a href="#" class="active">Inicio</a>
+                <a href="#">Tienda</a>
+                <a href="#">Ofertas</a>
+                <a href="#">Categorías</a>
+            </div>
+            
+            <div class="user-info">
+                <div class="user-avatar">A</div>
+                <div>
+                    <div style="font-weight: 600; font-size: 16px;">Admin User</div>
+                    <div style="font-size: 14px; opacity: 0.9;">Administrador</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NUEVO: Banners promocionales -->
+        <div class="promo-banners">
+            <div class="promo-card">
+                <div class="promo-overlay">
+                    <h2 class="promo-title">Laptop Colección</h2>
+                    <p>Las mejores laptops del mercado con descuentos exclusivos</p>
+                    <a href="#" class="promo-btn">COMPRAR AHORA</a>
+                </div>
+            </div>
+            <div class="promo-card">
+                <div class="promo-overlay">
+                    <h2 class="promo-title">Accessories Colección</h2>
+                    <p>Accesorios premium para tus dispositivos electrónicos</p>
+                    <a href="#" class="promo-btn">COMPRAR AHORA</a>
+                </div>
+            </div>
+            <div class="promo-card">
+                <div class="promo-overlay">
+                    <h2 class="promo-title">Cameras Colección</h2>
+                    <p>Cámaras profesionales y accesorios de fotografía</p>
+                    <a href="#" class="promo-btn">COMPRAR AHORA</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- NUEVO: Sección de productos nuevos -->
+        <div class="new-products">
+            <h2 class="section-title">
+                <i class="fas fa-star"></i>
+                PRODUCTOS NUEVOS
+            </h2>
+            
+            <div class="categories-grid">
+                <div class="category-card">
+                    <div class="category-img"></div>
+                    <div class="category-info">
+                        <h3 class="category-name">Laptops</h3>
+                        <a href="#" class="category-link">Ver productos <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+                <div class="category-card">
+                    <div class="category-img"></div>
+                    <div class="category-info">
+                        <h3 class="category-name">Smartphones</h3>
+                        <a href="#" class="category-link">Ver productos <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+                <div class="category-card">
+                    <div class="category-img"></div>
+                    <div class="category-info">
+                        <h3 class="category-name">Cameras</h3>
+                        <a href="#" class="category-link">Ver productos <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+                <div class="category-card">
+                    <div class="category-img"></div>
+                    <div class="category-info">
+                        <h3 class="category-name">Accessories</h3>
+                        <a href="#" class="category-link">Ver productos <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CORRECCIÓN: Sección de métricas con animación -->
+        <div class="metrics-section">
+            <div class="metric-card">
+                <div class="metric-title">Ventas Totales</div>
+                <div class="metric-value">$18,240</div>
+                <div class="metric-change change positive">
+                    <i class="fas fa-arrow-up"></i> 12.5% desde el mes pasado
+                </div>
+                <div class="metric-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">Pedidos Completados</div>
+                <div class="metric-value">1,248</div>
+                <div class="metric-change change positive">
+                    <i class="fas fa-arrow-up"></i> 8.3% desde el mes pasado
+                </div>
+                <div class="metric-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">Clientes Nuevos</div>
+                <div class="metric-value">324</div>
+                <div class="metric-change change negative">
+                    <i class="fas fa-arrow-down"></i> 3.2% desde el mes pasado
+                </div>
+                <div class="metric-icon">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- NUEVO: Gráficos interactivos -->
+        <div class="charts-section">
+            <div class="chart-card">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    Ventas por Categoría
+                </h2>
+                <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    Rendimiento Mensual
+                </h2>
+                <div class="chart-container">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // NUEVO: Funcionalidad para el sidebar desplegable
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleBtn = document.querySelector('.toggle-btn');
+            const sidebar = document.querySelector('.sidebar');
+            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+            
+            // Alternar sidebar en desktop
+            if(toggleBtn) {
+                toggleBtn.addEventListener('click', function() {
+                    sidebar.classList.toggle('collapsed');
+                });
+            }
+            
+            // Alternar sidebar en móvil
+            if(mobileMenuBtn) {
+                mobileMenuBtn.addEventListener('click', function() {
+                    sidebar.classList.toggle('active');
+                });
+            }
+            
+            // Animación para las tarjetas métricas
+            const metricCards = document.querySelectorAll('.metric-card');
+            metricCards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(20px)';
+                    card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    
+                    setTimeout(() => {
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    }, 100);
+                }, index * 150);
+            });
+
+            // CORRECCIÓN: Gráficos interactivos con Chart.js
+            // Gráfico de ventas por categoría
+            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+            const categoryChart = new Chart(categoryCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Laptops', 'Smartphones', 'Cameras', 'Accessories', 'Tablets'],
+                    datasets: [{
+                        data: [35, 25, 15, 20, 5],
+                        backgroundColor: [
+                            '#4361ee',
+                            '#7209b7',
+                            '#f72585',
+                            '#4cc9f0',
+                            '#3a0ca3'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.parsed}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Gráfico de rendimiento mensual
+            const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+            const performanceChart = new Chart(performanceCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                    datasets: [{
+                        label: 'Ventas ($)',
+                        data: [12500, 14200, 13800, 16500, 18200, 19800, 21000, 19500, 20500, 22300, 24000, 25800],
+                        borderColor: '#4361ee',
+                        backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        borderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Ventas: $${context.parsed.y.toLocaleString()}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // CORRECCIÓN: Cerrar sidebar al hacer clic fuera de él en móvil
+            document.addEventListener('click', function(e) {
+                if (window.innerWidth <= 992) {
+                    if (!sidebar.contains(e.target) && !mobileMenuBtn.contains(e.target) && 
+                        sidebar.classList.contains('active')) {
+                        sidebar.classList.remove('active');
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
