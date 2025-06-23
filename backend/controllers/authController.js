@@ -1,27 +1,52 @@
-const User = require('../models/user');
+// controllers/authController.js
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const pool = require('../db');
 
-const login = async (req, res) => {
-  const { email, password } = req.body;
-  const user = await User.findByEmail(email);
-  
-  if (!user || !(await bcrypt.compare(password, user.password_hash))) {
-    return res.status(401).json({ error: 'Credenciales inválidas' });
-  }
-
-  const token = jwt.sign(
-    { id: user.id, role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: '1h' }
-  );
-
-  res.json({ token });
-};
-
+// REGISTRO DE USUARIO
 const register = async (req, res) => {
-  // Validar datos aquí...
-  const newUser = await User.create(req.body.email, req.body.password);
-  res.status(201).json(newUser);
+  try {
+    const { email, password } = req.body;
+    
+    // Validación básica
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email y contraseña son requeridos' });
+    }
+    
+    // Resto de la lógica de registro...
+    
+  } catch (error) {
+    console.error('Error en registro:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
 };
 
-module.exports = { login, register };
+// LOGIN DE USUARIO
+const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    // Validación básica
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email y contraseña son requeridos' });
+    }
+    
+    // Resto de la lógica de login...
+    
+  } catch (error) {
+    console.error('Error en login:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+// PERFIL DE USUARIO
+const getProfile = async (req, res) => {
+  // Lógica para obtener perfil...
+};
+
+// Exporta como objeto con funciones
+module.exports = {
+  register,
+  login,
+  getProfile
+};

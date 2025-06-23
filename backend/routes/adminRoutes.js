@@ -1,12 +1,12 @@
-// Rutas en routes/adminRoutes.js
-router.get('/orders', isAdmin, getOrders);
-router.get('/users', isAdmin, getUsers);
-router.patch('/products/:id/stock', isAdmin, updateStock);
+// routes/adminRoutes.js
+const express = require('express');
+const router = express.Router();
+const { isAdmin } = require('../middleware/auth');
+const adminController = require('../controllers/adminController');  // Importa el controlador
 
-// Ejemplo: Actualizar stock
-const updateStock = async (req, res) => {
-  const { id } = req.params;
-  const { stock } = req.body;
-  await pool.query('UPDATE products SET stock = $1 WHERE id = $2', [stock, id]);
-  res.json({ message: 'Stock actualizado' });
-};
+// Rutas usando los controladores importados
+router.get('/orders', isAdmin, adminController.getOrders);
+router.get('/users', isAdmin, adminController.getUsers);
+router.patch('/products/:id/stock', isAdmin, adminController.updateStock);
+
+module.exports = router;
