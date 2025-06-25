@@ -1,5 +1,5 @@
 const bcrypt = require('bcrypt');
-const pool = require('../db');
+const pool = require('../config/db');
 const jwt = require('jsonwebtoken');
 
 class User {
@@ -11,22 +11,19 @@ class User {
   static async create({ email, password, role = 'customer' }) {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-    
+
     const result = await pool.query(
       `INSERT INTO users (email, password_hash, role, is_active) 
        VALUES ($1, $2, $3, $4) 
        RETURNING id, email, role, created_at`,
       [email, hashedPassword, role, true]
     );
-    
+
     return result.rows[0];
   }
 
   static async updateLoginData(id) {
-    await pool.query(
-      'UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1',
-      [id]
-    );
+    await pool.query('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1', [id]);
   }
 
   static async setResetToken(id, token, expiry) {
@@ -43,19 +40,19 @@ class User {
       'SELECT * FROM users WHERE reset_token = $1 AND reset_token_expiry > NOW()',
       [token]
     );
-    
+
     if (!user.rows[0]) return null;
-    
+
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(newPassword, salt);
-    
+
     await pool.query(
       `UPDATE users 
        SET password_hash = $1, reset_token = NULL, reset_token_expiry = NULL 
        WHERE id = $2`,
       [hashedPassword, user.rows[0].id]
     );
-    
+
     return user.rows[0];
   }
 
@@ -68,7 +65,7 @@ class User {
       {
         id: user.id,
         email: user.email,
-        role: user.role
+        role: user.role,
       },
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
