@@ -3,9 +3,11 @@ const express = require('express');
 require('dotenv').config({ path: '.env' });
 const bcrypt = require('bcrypt');
 const { Pool } = require('pg');
+const morgan = require('morgan');
 
 const app = express();
 app.use(express.json());
+app.use(morgan('dev'));
 
 // Configuración de conexión
 const pool = new Pool({
