@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - ElectroGalíndez</title>
+    <meta http-equiv="Content-Security-Policy" 
+      content="script-src 'self' 'unsafe-inline' 'unsafe-eval';
+               object-src 'none';
+               base-uri 'none';
+               connect-src 'self' http://localhost:5000;">
     <style>
         /* Manteniendo tu estilo base */
         :root {
@@ -241,23 +246,18 @@
             <h1>ElectroGalíndez</h1>
             <p>Tu tienda de electrodomésticos de confianza</p>
         </div>
-        
-        <div class="tabs">
-            <div class="tab active" data-tab="login">Iniciar Sesión</div>
-            <div class="tab" data-tab="register">Registrarse</div>
-        </div>
-        
+
         <!-- Pestaña de Login -->
         <div class="form-container">
             <div class="tab-content active" id="login-tab">
                 <div class="form-group">
                     <label for="login-email">Email:</label>
-                    <input type="email" id="login-email" placeholder="tu@email.com" required>
+                    <input class="input" type="email" name="email" id="email" placeholder="tu@email.com" required>
                 </div>
                 
                 <div class="form-group">
                     <label for="login-password">Contraseña:</label>
-                    <input type="password" id="login-password" placeholder="••••••••" required>
+                    <input class="input" type="password" name="password" id="password" placeholder="••••••••" required>
                 </div>
                 
                 <div class="form-group">
@@ -277,93 +277,20 @@
                 <div class="token-display" id="token-display">
                     <strong>Token JWT:</strong> <span id="token-value"></span>
                 </div>
+                <div class="admin-login-link">
+                ¿Eres administrador? <a href="#" id="admin-login">Acceso administrador</a>
+                </div>
             </div>
             
-            <!-- Pestaña de Registro -->
-            <div class="tab-content" id="register-tab">
-                <div class="instructions">
-                    Regístrate para disfrutar de una experiencia personalizada y guardar tu carrito de compras.
-                </div>
-                
-                <div class="form-group">
-                    <label for="register-email">Email:</label>
-                    <input type="email" id="register-email" placeholder="tu@email.com" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="register-password">Contraseña (mínimo 8 caracteres):</label>
-                    <input type="password" id="register-password" placeholder="••••••••" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="register-confirm">Confirmar Contraseña:</label>
-                    <input type="password" id="register-confirm" placeholder="••••••••" required>
-                </div>
-                
-                <div class="form-group">
-                    <button id="register-btn">Crear Cuenta</button>
-                </div>
-                
-                <div class="result" id="register-result"></div>
-            </div>
-            
-            <!-- Pestaña de Recuperación de Contraseña (inicialmente oculta) -->
-            <div class="tab-content" id="forgot-tab">
-                <div class="instructions">
-                    Introduce tu email y te enviaremos un enlace para restablecer tu contraseña.
-                </div>
-                
-                <div class="form-group">
-                    <label for="forgot-email">Email:</label>
-                    <input type="email" id="forgot-email" placeholder="tu@email.com" required>
-                </div>
-                
-                <div class="form-group">
-                    <button id="send-reset-btn">Enviar Instrucciones</button>
-                </div>
-                
-                <div class="form-group">
-                    <button class="btn-secondary" id="back-to-login">Volver al Login</button>
-                </div>
-                
-                <div class="result" id="forgot-result"></div>
-            </div>
-            
-            <!-- Pestaña de Perfil (inicialmente oculta) -->
-            <div class="tab-content" id="profile-tab">
-                <div class="instructions">
-                    Información de tu cuenta de ElectroGalíndez
-                </div>
-                
-                <div class="form-group">
-                    <label>Email:</label>
-                    <input type="text" id="profile-email" readonly>
-                </div>
-                
-                <div class="form-group">
-                    <label>Rol:</label>
-                    <input type="text" id="profile-role" readonly>
-                </div>
-                
-                <div class="form-group">
-                    <label>Último inicio:</label>
-                    <input type="text" id="profile-last-login" readonly>
-                </div>
-                
-                <div class="form-group">
-                    <button class="btn-secondary" id="logout-btn">Cerrar Sesión</button>
-                </div>
-            </div>
-        </div>
         
         <div class="footer">
-            &copy; 2023 ElectroGalíndez. Todos los derechos reservados.
+            &copy; 2025 ElectroGalíndez. Todos los derechos reservados.
         </div>
     </div>
 
     <script>
         // Configuración
-        const API_BASE_URL = 'http://localhost:5432/api/auth';
+		const API_BASE_URL = "http://localhost:5000/api/auth";
         let currentUser = null;
         
         // Elementos del DOM
@@ -375,7 +302,7 @@
         const sendResetBtn = document.getElementById('send-reset-btn');
         const backToLoginBtn = document.getElementById('back-to-login');
         const logoutBtn = document.getElementById('logout-btn');
-        
+
         // Cambiar pestañas
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
@@ -453,7 +380,7 @@
                 document.getElementById('token-display').classList.add('show');
                 
                 // Guardar información del usuario
-                currentUser = data.user;
+                currentUser = data.users;
                 
                 // Mostrar perfil después de 2 segundos
                 setTimeout(() => {
@@ -511,7 +438,7 @@
                     document.getElementById('register-confirm').value = '';
                     hideResult('register-result');
                     showTab('login');
-                }, 3000);
+                }, 5000);
                 
             } catch (error) {
                 showResult('register-result', error.message, false);
@@ -550,7 +477,7 @@
                     document.getElementById('forgot-email').value = '';
                     hideResult('forgot-result');
                     showTab('login');
-                }, 3000);
+                }, 5000);
                 
             } catch (error) {
                 showResult('forgot-result', error.message, false);
@@ -595,6 +522,113 @@
                 
                 showProfile();
             }
+		//  Función para mostrar resultados
+        function showResult(message, isSuccess) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = message;
+            resultDiv.className = isSuccess ? 'success' : 'error';
+        }
+
+        async function handleLogin() {
+			const email = document.getElementById('email').value;
+			const password = document.getElementById('password').value;
+			
+			if (!email || !password) {
+				showResult('<p>Por favor completa todos los campos</p>', false);
+				return;
+			}
+			
+			try {
+				// 1. Validación básica del email
+				if (!validateEmail(email)) {
+					throw new Error('El formato del email es inválido');
+				}
+				
+				// 2. Mostrar estado de carga
+				showResult('<p>Iniciando sesión...</p>', true);
+				
+				// 3. Configuración con timeout para evitar esperas infinitas
+				const controller = new AbortController();
+				const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos timeout
+				
+				// 4. Realizar la petición con manejo de errores mejorado
+				const API_BASE_URL = "http://localhost:5000/api/auth";
+				const response = await fetch(`${API_BASE_URL}/login`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({ email, password }),
+					signal: controller.signal
+				});
+				
+				clearTimeout(timeoutId); // Cancelar el timeout si la respuesta llega
+				
+				// 5. Manejar errores HTTP
+				if (!response.ok) {
+					const errorData = await response.json();
+					throw new Error(errorData.message || `Error HTTP: ${response.status}`);
+				}
+				
+				// 6. Procesar respuesta exitosa
+				const data = await response.json();
+				
+				// 7. Validar estructura de respuesta
+				if (!data.token || !data.user) {
+					throw new Error('Respuesta inválida del servidor');
+				}
+				
+				// 8. Mostrar resultado exitoso
+				let resultHTML = `
+					<h3>¡Inicio de sesión exitoso!</h3>
+					<p><strong>Email:</strong> ${data.user.email}</p>
+					<p><strong>Rol:</strong> ${data.user.role}</p>
+				`;
+				
+				if (data.token) {
+					resultHTML += `
+						<div class="token-display">
+							<strong>Token JWT:</strong> ${data.token}
+						</div>
+						<p>Redirigiendo a la página principal...</p>
+					`;
+					localStorage.setItem('authToken', data.token);
+					
+					// Redirigir después de 3 segundos
+					setTimeout(() => {
+						window.location.href = 'index.html';
+					}, 5000);
+				}
+				
+				showResult(resultHTML, true);
+				
+			} catch (error) {
+				// 9. Manejar diferentes tipos de errores
+				let errorMessage = 'Error en el inicio de sesión';
+				
+				if (error.name === 'AbortError') {
+					errorMessage = 'El servidor no respondió a tiempo';
+				} else if (error.name === 'SyntaxError') {
+					errorMessage = 'Respuesta inválida del servidor';
+				} else if (error.message.includes('Failed to fetch')) {
+					errorMessage = 'No se pudo conectar con el servidor';
+				} else {
+					errorMessage = error.message;
+				}
+				
+				showResult(`
+					<h3>Error en el inicio de sesión</h3>
+					<p>${errorMessage}</p>
+				`, false);
+				console.error('Error en login:', error);
+			}
+			}
+
+				// Función para validar emails
+				function validateEmail(email) {
+					const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+					return re.test(email);
+				}
         });
     </script>
 </body>

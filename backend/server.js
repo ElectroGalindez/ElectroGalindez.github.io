@@ -1,64 +1,150 @@
-// server.js
 require('dotenv').config();
 const express = require('express');
+const bcrypt = require('bcrypt');
+const { Pool } = require('pg');
+
 const app = express();
-const cors = require('cors');
-
-// Configuración básica
-const PORT = process.env.PORT || 4000;
-
-// Middlewares esenciales
-app.use(cors());
 app.use(express.json());
 
-// Ruta de prueba obligatoria
-app.get('/', (req, res) => {
-  res.send('¡Backend de ElectroGalíndez funcionando correctamente!');
+// Configuración de conexión
+const pool = new Pool({
+  user: process.env.DB_USER || 'electrogalindez',
+  host: process.env.DB_HOST || 'localhost',
+  database: process.env.DB_NAME || 'ElectroGalindez',
+  password: process.env.DB_PASSWORD || '3l3ctrogalind3z*',
+  port: process.env.DB_PORT || 5432,
 });
 
-// Ruta de registro de prueba
-app.post('/api/auth/register', (req, res) => {
-  console.log('✅ Petición de registro recibida:', req.body);
-  res.json({ 
-    status: 'success',
-    message: 'Registro simulado exitoso',
-    data: {
-      email: req.body.email,
-      id: Math.floor(Math.random() * 1000)
+// Middleware para verificar usuario existente
+const checkExistingUser = async (req, res, next) => {
+  const { email } = req.body;
+  
+  try {
+    const result = await pool.query(
+      'SELECT email FROM users WHERE email = $1', 
+      [email]
+    );
+    
+    if (result.rows.length > 0) {
+      return res.status(409).json({ 
+        error: 'El correo electrónico ya está registrado',
+        field: 'email'
+      });
     }
-  });
-});
-
-// Manejo de errores
-app.use((err, req, res, next) => {
-  console.error('🔥 Error:', err);
-  res.status(500).json({ error: 'Error interno del servidor' });
-});
-
-// Función para obtener IP local
-function getIPAddress() {
-  const interfaces = require('os').networkInterfaces();
-  for (const name in interfaces) {
-    for (const interface of interfaces[name]) {
-      if (interface.family === 'IPv4' && !interface.internal) {
-        return interface.address;
-      }
-    }
+    next();
+  } catch (error) {
+    console.error('Error checking user:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
-  return 'localhost';
-}
+};
 
-// Iniciar servidor con verificación
-try {
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`\n✅✅✅ Servidor backend ACTIVO en puerto ${PORT} ✅✅✅`);
-    console.log(`🔗 Acceso local: http://localhost:${PORT}`);
-    console.log(`🌐 Acceso desde red: http://${getIPAddress()}:${PORT}`);
-    console.log('\nEndpoints disponibles:');
-    console.log(`- GET  /             → Verificar estado del servidor`);
-    console.log(`- POST /api/auth/register → Registrar usuario (prueba)`);
-  });
-} catch (error) {
-  console.error('❌❌❌ Error crítico al iniciar servidor:', error);
+// Endpoint de registro mejorado
+app.post('/api/register', checkExistingUser, async (req, res) => {
+  const {
+    'first-name': firstName,
+    'last-name': lastName,
+    email,
+    address,
+    city,
+    country,
+    'zip-code': zipCode,
+    tel: phone,
+    password
+  } = req.body;
+
+  // Validación mejorada
+  const errors = {};
+  if (!firstName) errors.firstName = 'Nombre es requerido';
+  if (!lastName) errors.lastName = 'Apellido es requerido';
+  if (!email) errors.email = 'Email es requerido';
+  if (!password) errors.password = 'Contraseña es requerida';
+  // Añade validaciones para otros campos según necesites
+
+  if (Object.keys(errors).length > 0) {
+    return res.status(400).json({ errors });
+  }
+
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    const result = await pool.query(
+      `INSERT INTO users (
+        first_name, last_name, email, password_hash,
+        address, city, country, zip_code, phone
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+      RETURNING id, first_name, last_name, email`,
+      [
+        firstName, lastName, email, hashedPassword,
+        address, city, country, zipCode, phone
+      ]
+    );
+
+    res.status(201).json({
+      success: true,
+      user: result.rows[0],
+      message: 'Registro exitoso. Redirigiendo...'
+    });
+  } catch (error) {
+    console.error('Error en registro:', error);
+    
+    // Manejo específico de error de email duplicado
+    if (error.code === '23505' && error.constraint === 'unique_email') {
+      return res.status(409).json({ 
+        error: 'El correo electrónico ya está registrado',
+        field: 'email'
+      });
+    }
+    
+    res.status(500).json({ error: 'Error en el servidor' });
+  }
+});
+const jwt = require('jsonwebtoken');
+
+// Verificar que el secreto existe
+if (!process.env.JWT_SECRET) {
+  console.error('❌ ERROR FATAL: JWT_SECRET no definido');
   process.exit(1);
 }
+
+// Configuración avanzada de tokens
+const generateToken = (user) => {
+  return jwt.sign(
+    {
+      userId: user.user_id,
+      role: user.role,
+      iss: 'ElectroGalindez API',
+      aud: 'electrogalindez@gmail.com'
+    },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: '1h',
+      algorithm: 'HS512' // Algoritmo más fuerte
+    }
+  );
+};
+
+const fs = require('fs');
+const crypto = require('crypto');
+
+function auditSecrets() {
+  const currentHash = crypto.createHash('sha256')
+    .update(process.env.JWT_SECRET)
+    .digest('hex');
+  
+  const auditLog = {
+    date: new Date(),
+    hash: currentHash,
+    environment: process.env.NODE_ENV
+  };
+  
+  // Guardar en archivo fuera del repositorio
+  fs.appendFileSync('/secure/audit.log', JSON.stringify(auditLog) + '\n');
+  
+  console.log('✅ Auditoría de secretos completada');
+}
+
+// Ejecutar diariamente
+setInterval(auditSecrets, 24 * 60 * 60 * 1000);
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));
