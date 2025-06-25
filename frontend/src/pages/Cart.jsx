@@ -31,7 +31,7 @@ function Cart() {
         <p>Tu carrito está vacío</p>
       ) : (
         <ul>
-          {cart.map(({ product, quantity }, i) => (
+          {cart.map(({ product, quantity }) => (
             <li key={product.id}>
               {product.name} - €{product.price} x {quantity}
               <button onClick={() => removeFromCart(product.id)}>
