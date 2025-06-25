@@ -1,10 +1,12 @@
 const express = require('express');
 require('dotenv').config({ path: '.env' });
 const morgan = require('morgan');
+const cors = require('cors');
 
 require('./config/db'); // Importa la configuración de la base de datos
 
 const app = express();
+app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
 
