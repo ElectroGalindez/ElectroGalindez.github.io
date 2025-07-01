@@ -1,1 +1,0 @@
-# ElectroGalindez.github.io
