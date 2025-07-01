@@ -1,17 +1,9 @@
-import React, { useEffect, useState } from 'react';
+// src/components/FeaturedProducts.jsx
+import React from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/FeaturedProducts.css';
 
-const FeaturedProducts = () => {
-  const [products, setProducts] = useState([]);
-
-  useEffect(() => {
-    fetch('http://localhost:3001/api/products') // Ajusta si tu endpoint es diferente
-      .then((res) => res.json())
-      .then((data) => setProducts(data.products || []))
-      .catch((err) => console.error('Error al cargar productos:', err));
-  }, []);
-
+const FeaturedProducts = ({ products = [] }) => {
   return (
     <section className="featured-products">
       <h2>Productos Destacados</h2>

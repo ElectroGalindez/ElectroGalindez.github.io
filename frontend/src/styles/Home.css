@@ -1,0 +1,35 @@
+/* src/styles/Home.css */
+
+.home-container {
+  padding: 1rem;
+}
+
+.products-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.product-card {
+  width: 200px;
+  padding: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.product-card:hover {
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.product-card img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  margin-bottom: 0.5rem;
+}
+.home-container {
+  padding: 1rem;
+}

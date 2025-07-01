@@ -5,7 +5,7 @@ import ProductList from "./pages/ProductList";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import OrderSuccess from "./pages/OrderSuccess";
-import "./App.css";
+import "/src/styles//App.css";
 
 function App() {
   return (

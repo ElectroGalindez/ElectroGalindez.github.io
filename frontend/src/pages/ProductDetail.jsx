@@ -1,41 +1,39 @@
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { getProductById } from "../services/api";
 import { useCart } from "../context/CartContext";
+import "../styles/ProductDetail.css";
 
 function ProductDetail() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
-  const [loading, setLoading] = useState(true);
   const { addToCart } = useCart();
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
-    setLoading(true);
-    getProductById(id)
-      .then((data) => {
-        if (data.product) {
-          setProduct(data.product);
-        } else {
-          setProduct(null);
-        }
-      })
-      .finally(() => setLoading(false));
+    fetch(`http://localhost:3001/api/products/${id}`)
+      .then((res) => res.json())
+      .then((data) => setProduct(data.product))
+      .catch((err) => console.error("Error al cargar producto:", err));
   }, [id]);
 
-  if (loading) return <p>Cargando...</p>;
+  const handleAddToCart = () => {
+    addToCart(product);
+    setMessage("✅ Producto agregado al carrito");
+    setTimeout(() => setMessage(""), 2000); // borra el mensaje después de 2s
+  };
 
-  if (!product && !loading) return <p>Producto no encontrado</p>;
+  if (!product) return <p>Cargando producto...</p>;
 
   return (
-    <div>
+    <div className="product-detail">
+      <img src={product.image_url} alt={product.name} />
       <h2>{product.name}</h2>
-      <p>Precio: €{product.price}</p>
       <p>{product.description}</p>
-      <img src={product.image_url} alt={product.name} width="200" />
-      <div>
-        <button onClick={() => addToCart(product)}>Añadir al carrito</button>
-      </div>
+      <p>€{product.price}</p>
+      <button onClick={handleAddToCart}>Agregar al carrito</button>
+      {message && <p style={{ color: "green", marginTop: "1rem" }}>{message}</p>}
     </div>
   );
 }
+
 export default ProductDetail;

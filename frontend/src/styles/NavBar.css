@@ -28,3 +28,29 @@
   color: #111;
   font-size: 18px;
 }
+nav {
+  padding: 1rem 2rem;
+  background-color: #ffffff;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+nav a {
+  margin: 0 1rem;
+  font-weight: bold;
+}
+nav {
+  padding: 1rem 2rem;
+  background-color: #ffffff;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+nav a {
+  margin: 0 1rem;
+  font-weight: bold;
+}

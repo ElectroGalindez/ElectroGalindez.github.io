@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { createOrder } from "../services/api";
 import { useCart } from "../context/CartContext";
+import "../styles/Cart.css";
+
 
 function Cart() {
   const { cart, removeFromCart, clearCart } = useCart();
@@ -10,39 +12,47 @@ function Cart() {
     .reduce((sum, item) => sum + item.product.price * item.quantity, 0)
     .toFixed(2);
 
-  const handleOrder = () => {
-    const user_id = 1; // en app real vendría del login
+  const handleOrder = async () => {
+    const user_id = 1; // normalmente viene del login
     const items = cart.map((item) => ({
-      product_id: item.product_id,
+      product_id: item.product.id,
       quantity: item.quantity,
-      price: item.price,
+      price: item.product.price,
     }));
 
-    createOrder(user_id, items).then(() => {
+    try {
+      await createOrder(user_id, items);
       clearCart();
       navigate("/success");
-    });
+    } catch (err) {
+      console.error("Error al crear orden:", err);
+      alert("Hubo un error al procesar tu orden.");
+    }
   };
 
   return (
-    <div>
-      <h2>Carrito</h2>
+    <div className="cart-container">
+      <h2>Carrito de compras</h2>
       {cart.length === 0 ? (
         <p>Tu carrito está vacío</p>
       ) : (
-        <ul>
-          {cart.map(({ product, quantity }) => (
-            <li key={product.id}>
-              {product.name} - €{product.price} x {quantity}
-              <button onClick={() => removeFromCart(product.id)}>
-                Eliminar
-              </button>
-            </li>
-          ))}
-        </ul>
+        <>
+          <ul className="cart-list">
+            {cart.map(({ product, quantity }) => (
+              <li key={product.id} className="cart-item">
+                <img src={product.image_url} alt={product.name} width="80" />
+                <div>
+                  <h4>{product.name}</h4>
+                  <p>€{product.price} x {quantity}</p>
+                </div>
+                <button onClick={() => removeFromCart(product.id)}>Eliminar</button>
+              </li>
+            ))}
+          </ul>
+          <p className="cart-total">Total: €{total}</p>
+          <button className="checkout-button" onClick={handleOrder}>Realizar pedido</button>
+        </>
       )}
-      <p>Total: €{total}</p>
-      <button onClick={handleOrder}>Realizar pedido</button>
     </div>
   );
 }
