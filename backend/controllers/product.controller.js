@@ -11,7 +11,7 @@ exports.createProduct = async (req, res) => {
 
     // Insertar el nuevo producto en la base de datos
     const result = await pool.query(
-      'INSERT INTO products (name, price, description, image_url) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      'INSERT INTO products (name, price, description, image_url, category_id) VALUES ($1, $2, $3, $4, $5) RETURNING *',
       [name, price, description, image_url, category_id]
     );
 
