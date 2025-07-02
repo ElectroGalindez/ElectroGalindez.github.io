@@ -1,21 +1,27 @@
-import { Link } from 'react-router-dom';
-import '../styles/Navbar.css';
+import { Link } from "react-router-dom";
+import { useCart } from "../context/CartContext";
+import "../styles/Navbar.css";
 
 function Navbar() {
+  const { cart } = useCart();
+  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+
   return (
-    <nav className="navbar">
-      <div className="navbar-left">
-        <Link to="/" className="navbar-logo">ElectroGalíndez</Link>
+    <header className="navbar">
+      <div className="navbar__logo">
+        <Link to="/">ElectroGalíndez</Link>
       </div>
-      <div className="navbar-center">
-        <input type="text" placeholder="Buscar productos..." className="navbar-search" />
-      </div>
-      <div className="navbar-right">
+      <nav className="navbar__links">
+        <Link to="/">Inicio</Link>
         <Link to="/products">Productos</Link>
-        <Link to="/cart">🛒</Link>
-        <Link to="/login">👤</Link>
-      </div>
-    </nav>
+        <Link to="/cart">
+          Carrito
+          {totalItems > 0 && <span className="navbar__badge">{totalItems}</span>}
+        </Link>
+        <Link to="/login">Login</Link>
+
+      </nav>
+    </header>
   );
 }
 

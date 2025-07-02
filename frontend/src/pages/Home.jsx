@@ -27,7 +27,7 @@ function Home() {
   return (
     <div>
       <Hero />
-      <CategoryFilter onFilter={loadProducts} />
+      <CategoryFilter onSelectCategory={loadProducts} />
       <FeaturedProducts products={products} />
     </div>
   );

@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import CategoryFilter from '../components/CategoryFilter';
 import { Link } from 'react-router-dom';
+import CategoryFilter from '../components/CategoryFilter';
+import { useCart } from '../context/CartContext'; // ✅ Importar el contexto
 import '../styles/ProductList.css';
 
 function ProductList() {
   const [products, setProducts] = useState([]);
+  const { addToCart } = useCart(); // ✅ usar addToCart
 
   const fetchProducts = async (categoryId = null) => {
     let url = 'http://localhost:3001/api/products';
@@ -33,8 +35,13 @@ function ProductList() {
           <div key={product.id} className="product-card">
             <img src={product.image_url} alt={product.name} />
             <h3>{product.name}</h3>
-            <p>${product.price}</p>
-            <Link to={`/products/${product.id}`} className="btn">Ver más</Link>
+            <p>€{product.price}</p>
+            <div className="button-group">
+              <Link to={`/products/${product.id}`} className="btn">Ver más</Link>
+              <button className="btn add-cart" onClick={() => addToCart(product)}>
+                Agregar al carrito
+              </button>
+            </div>
           </div>
         ))}
       </div>

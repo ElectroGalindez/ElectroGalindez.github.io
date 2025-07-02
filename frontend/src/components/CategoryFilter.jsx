@@ -1,21 +1,29 @@
-// src/components/CategoryFilter.jsx
-import React from "react";
+import React, { useState } from "react";
 import { useStore } from "../context/StoreContext";
-import "../styles/CategoryFilter.css"; // Asegúrate de que este archivo exista
+import "../styles/CategoryFilter.css";
 
 function CategoryFilter({ onSelectCategory }) {
-  const { categories } = useStore();
+  const { categories = [] } = useStore();
+  const [activeCategory, setActiveCategory] = useState(null);
+
+  const handleClick = (id) => {
+    setActiveCategory(id);
+    onSelectCategory(id);
+  };
 
   return (
     <div className="category-filter">
-      <button className="category-button" onClick={() => onSelectCategory(null)}>
+      <button
+        className={`category-button ${activeCategory === null ? "active" : ""}`}
+        onClick={() => handleClick(null)}
+      >
         Todos
       </button>
       {categories.map((cat) => (
         <button
           key={cat.id}
-          className="category-button"
-          onClick={() => onSelectCategory(cat.id)}
+          className={`category-button ${activeCategory === cat.id ? "active" : ""}`}
+          onClick={() => handleClick(cat.id)}
         >
           {cat.name}
         </button>
