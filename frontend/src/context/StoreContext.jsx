@@ -5,7 +5,12 @@ const StoreContext = createContext();
 
 export const StoreProvider = ({ children }) => {
   const [categories, setCategories] = useState([]);
+  const [user, setUser] = useState(() => {
+    const storedUser = localStorage.getItem("user");
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
 
+  // Cargar categorías una vez al inicio
   useEffect(() => {
     fetch("http://localhost:3001/api/categories")
       .then((res) => res.json())
@@ -14,7 +19,7 @@ export const StoreProvider = ({ children }) => {
   }, []);
 
   return (
-    <StoreContext.Provider value={{ categories }}>
+    <StoreContext.Provider value={{ categories, user, setUser }}>
       {children}
     </StoreContext.Provider>
   );

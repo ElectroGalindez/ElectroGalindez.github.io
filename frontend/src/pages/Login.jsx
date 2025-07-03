@@ -2,50 +2,51 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import 'react-toastify/dist/ReactToastify.css';
 import '../styles/Auth.css';
+import { useAuth } from "../context/AuthContext"; // Usamos el contexto para login
 
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+
+    // Validación de campos antes de hacer la petición
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      setError('Correo electrónico no válido');
+      return;
+    }
 
     try {
       const res = await fetch('http://localhost:3001/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }) // ✅ solo email y password
+        body: JSON.stringify({ email, password }) // Enviamos solo email y password
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        console.error('Error de autenticación:', data);
-        setError(data.message || 'Login fallido');
+        setError(data.message || 'Email o contraseña incorrectos');
         return;
       }
 
-      // ✅ Guardar datos en localStorage
+      // Guardamos los datos en localStorage
       const { user, token } = data;
-      const { role } = user;
-
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('token', token);
 
-      setError('');
+      // Llamamos al contexto para guardar el usuario y token
+      login(user, token);
 
-      // ✅ Redirección por rol
-      if (role === 'admin') {
-        navigate('/admin');
-      } else {
-        navigate('/');
-      }
+      setError('');
+      navigate('/'); // Redirige al home
 
     } catch (err) {
-      console.error('Error de red:', err);
-      setError('Error al conectar con el servidor');
+      setError('Error de red, intenta nuevamente');
     }
   };
 
@@ -70,7 +71,7 @@ function Login() {
         />
 
         <button type="submit">Entrar</button>
-        {error && <p className="error-message">{error}</p>}
+        {error && <p className="error-message">{error}</p>} {/* Mostrar el error aquí */}
       </form>
 
       <p className="auth-switch">

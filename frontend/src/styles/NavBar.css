@@ -1,8 +1,5 @@
-
+/* Navbar general */
 .navbar {
-  position: sticky;
-  top: 0;
-  z-index: 1000;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -10,20 +7,23 @@
   padding: 1rem 2rem;
   flex-wrap: wrap;
   color: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
 }
 
-.navbar__logo {
+.navbar__logo a {
   font-size: 1.5rem;
   font-weight: bold;
-  color: #fff;
+  color: #00bcd4;
   text-decoration: none;
 }
 
 .navbar__links {
   display: flex;
+  align-items: center;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 1rem;
 }
 
 .navbar__links a {
@@ -40,16 +40,9 @@
   color: #00bcd4;
 }
 
-/* carrito */
-.cart-link {
-  position: relative;
-  text-decoration: none;
-  color: inherit;
-}
-
+/* 🛒 Badge */
 .cart-wrapper {
   position: relative;
-  display: inline-block;
 }
 
 .cart-badge {
@@ -59,7 +52,6 @@
   background-color: red;
   color: white;
   font-size: 11px;
-  font-weight: bold;
   width: 20px;
   height: 20px;
   border-radius: 50%;
@@ -70,10 +62,63 @@
   z-index: 1;
 }
 
+/* 👤 User menu */
+.navbar__user {
+  position: relative;
+}
 
+.user-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: white;
+}
 
+.user-menu {
+  position: absolute;
+  top: 2.5rem;
+  right: 0;
+  background: #fff;
+  color: #333;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 0.75rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  min-width: 180px;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  animation: fadeIn 0.3s ease-out;
+}
 
-/* ✅ Responsive sin columna */
+.user-menu a,
+.user-menu button {
+  text-align: left;
+  padding: 0.3rem 0;
+  color: #333;
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.user-menu button:hover,
+.user-menu a:hover {
+  color: #007bff;
+}
+
+.user-email {
+  font-weight: bold;
+}
+
+.user-role {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+/* 🔽 Responsive sin columna */
 @media (max-width: 768px) {
   .navbar {
     padding: 1rem;
@@ -82,8 +127,8 @@
 
   .navbar__links {
     justify-content: center;
-    flex-wrap: wrap; /* sigue en fila pero se adapta */
-    gap: 0.5rem;
+    flex-wrap: wrap;
+    gap: 0.6rem;
   }
 
   .navbar__links a {
@@ -91,7 +136,20 @@
     padding: 0.4rem 0.6rem;
   }
 
-  .cart-icon {
-    font-size: 1.2rem;
+  .cart-wrapper {
+    position: absolute;
+    right: 10px;
+  }
+}
+
+/* Animación al mostrar el menú de usuario */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

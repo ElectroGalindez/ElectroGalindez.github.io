@@ -103,13 +103,19 @@ exports.updateProduct = async (req, res) => {
 };
 
 exports.deleteProduct = async (req, res) => {
-  try {
+   try {
     const { id } = req.params;
+
+    // 1. Eliminar las referencias del producto en order_items
+    await pool.query('DELETE FROM order_items WHERE product_id = $1', [id]);
+
+    // 2. Eliminar el producto de la tabla products
     const result = await pool.query('DELETE FROM products WHERE id = $1 RETURNING *', [id]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Producto no encontrado' });
     }
+
 
     res.status(200).json({
       success: true,

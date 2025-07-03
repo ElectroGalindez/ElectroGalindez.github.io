@@ -10,7 +10,7 @@ function Cart() {
 
   const total = cart
     .reduce((sum, item) => sum + item.product.price * item.quantity, 0)
-    .toFixed(2);
+    .toFixed(2); 
 
   const handleOrder = async () => {
     const user_id = 1; 
