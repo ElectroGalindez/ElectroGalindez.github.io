@@ -5,7 +5,7 @@ const pool = require('../config/db');
 // REGISTRO DE USUARIO
 const register = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role = "user" } = req.body;
 
     // Validación básica
     if (!email || !password) {
@@ -21,14 +21,14 @@ const register = async (req, res) => {
     // Hash de la contraseña
     const hashedPassword = await bcrypt.hash(password, 10);
     // Insertar el nuevo usuario en la base de datos
-    await pool.query('INSERT INTO users (email, password) VALUES ($1, $2)', [email, hashedPassword]);
+    await pool.query('INSERT INTO users (email, password, role) VALUES ($1, $2, $3)', [email, hashedPassword, role]);
 
     // retornar respuesta exitosa
     res.status(201).json({
       success: true,
       message: 'Usuario registrado exitosamente',
       user: {
-        email: email,
+        email: { email, role },
       },
     });
   } catch (error) {
@@ -67,6 +67,7 @@ const login = async (req, res) => {
       token: token,
       user: {
         email: user.email,
+        role: user.role,
       },
     });
   } catch (error) {
@@ -102,7 +103,6 @@ const getProfile = async (req, res) => {
   }
 };
 
-// Exporta como objeto con funciones
 module.exports = {
   register,
   login,

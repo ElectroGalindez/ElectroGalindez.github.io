@@ -19,7 +19,7 @@ function Navbar() {
           {totalItems > 0 && <span className="navbar__badge">{totalItems}</span>}
         </Link>
         <Link to="/login">Login</Link>
-
+        <Link to="/admin">Admin</Link>
       </nav>
     </header>
   );

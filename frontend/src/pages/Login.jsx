@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../styles/Auth.css';
 
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -16,21 +16,36 @@ function Login() {
       const res = await fetch('http://localhost:3001/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password }) // ✅ solo email y password
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error(data.message || 'Login fallido');
+        console.error('Error de autenticación:', data);
+        setError(data.message || 'Login fallido');
         return;
       }
 
-      toast.success('Login correcto');
-      navigate('/');
+      // ✅ Guardar datos en localStorage
+      const { user, token } = data;
+      const { role } = user;
+
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('token', token);
+
+      setError('');
+
+      // ✅ Redirección por rol
+      if (role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
+
     } catch (err) {
       console.error('Error de red:', err);
-      toast.error('Error al conectar con el servidor');
+      setError('Error al conectar con el servidor');
     }
   };
 
@@ -55,11 +70,12 @@ function Login() {
         />
 
         <button type="submit">Entrar</button>
-        </form>
+        {error && <p className="error-message">{error}</p>}
+      </form>
 
-        <p className="auth-switch">
-          ¿No tienes una cuenta? <a href="/register">Regístrate aquí</a>
-        </p>
+      <p className="auth-switch">
+        ¿No tienes una cuenta? <a href="/register">Regístrate aquí</a>
+      </p>
     </div>
   );
 }
