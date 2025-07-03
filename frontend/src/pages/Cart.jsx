@@ -13,7 +13,7 @@ function Cart() {
     .toFixed(2);
 
   const handleOrder = async () => {
-    const user_id = 1; // normalmente viene del login
+    const user_id = 1; 
     const items = cart.map((item) => ({
       product_id: item.product.id,
       quantity: item.quantity,

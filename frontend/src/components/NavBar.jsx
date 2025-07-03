@@ -14,9 +14,11 @@ function Navbar() {
       <nav className="navbar__links">
         <Link to="/">Inicio</Link>
         <Link to="/products">Productos</Link>
-        <Link to="/cart">
-          Carrito
-          {totalItems > 0 && <span className="navbar__badge">{totalItems}</span>}
+        <Link to="/cart" className="cart-link">
+          <div className="cart-wrapper">
+            Carrito
+            {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
+          </div>
         </Link>
         <Link to="/login">Login</Link>
         <Link to="/admin">Admin</Link>
