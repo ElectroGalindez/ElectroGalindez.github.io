@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useCart } from '../context/CartContext';
 import CategoryFilter from '../components/CategoryFilter';
+import { Link } from 'react-router-dom';
 import '../styles/ProductList.css';
 
 function ProductList() {
   const [products, setProducts] = useState([]);
-  const { addToCart } = useCart();
 
   const fetchProducts = async (categoryId = null) => {
     let url = 'http://localhost:3001/api/products';
@@ -26,25 +24,26 @@ function ProductList() {
   }, []);
 
   return (
-    <div className="product-list">
+    <div className="product-page">
       <h2>Todos los Productos</h2>
-      <CategoryFilter onSelectCategory={fetchProducts} />
 
+      {/* Botones arriba */}
+      <div className="category-row">
+        <CategoryFilter onSelectCategory={fetchProducts} />
+      </div>
+
+      {/* Productos debajo */}
       <div className="products-grid">
         {products.map((product) => (
           <div key={product.id} className="product-card">
             <img src={product.image_url} alt={product.name} />
             <h3>{product.name}</h3>
             <p>€{product.price}</p>
-            
             <div className="button-group">
-              <Link to={`/products/${product.id}`} className="btn">Ver más</Link>
-              <button
-                className="btn add-cart"
-                onClick={() => addToCart(product)}
-              >
-                Agregar al carrito
-              </button>
+              <Link to={`/products/${product.id}`} className="btn">
+                Ver más
+              </Link>
+              <button className="btn add-cart">Agregar al carrito</button>
             </div>
           </div>
         ))}

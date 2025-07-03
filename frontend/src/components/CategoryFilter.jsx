@@ -1,29 +1,44 @@
-import React, { useState } from "react";
-import { useStore } from "../context/StoreContext";
+// src/components/CategoryFilter.jsx
+import React, { useState, useEffect } from "react";
 import "../styles/CategoryFilter.css";
 
 function CategoryFilter({ onSelectCategory }) {
-  const { categories = [] } = useStore();
-  const [activeCategory, setActiveCategory] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [selected, setSelected] = useState(null); // null = "Todos"
 
-  const handleClick = (id) => {
-    setActiveCategory(id);
-    onSelectCategory(id);
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch("http://localhost:3001/api/categories");
+        const data = await res.json();
+        setCategories(data);
+      } catch (err) {
+        console.error("Error al cargar categorías:", err);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  const handleCategoryClick = (id) => {
+    setSelected(id);
+    onSelectCategory(id); // Esto se conecta con ProductList
   };
 
   return (
     <div className="category-filter">
       <button
-        className={`category-button ${activeCategory === null ? "active" : ""}`}
-        onClick={() => handleClick(null)}
+        className={`category-button ${selected === null ? "active" : ""}`}
+        onClick={() => handleCategoryClick(null)}
       >
         Todos
       </button>
+
       {categories.map((cat) => (
         <button
           key={cat.id}
-          className={`category-button ${activeCategory === cat.id ? "active" : ""}`}
-          onClick={() => handleClick(cat.id)}
+          className={`category-button ${selected === cat.id ? "active" : ""}`}
+          onClick={() => handleCategoryClick(cat.id)}
         >
           {cat.name}
         </button>
@@ -33,3 +48,4 @@ function CategoryFilter({ onSelectCategory }) {
 }
 
 export default CategoryFilter;
+
