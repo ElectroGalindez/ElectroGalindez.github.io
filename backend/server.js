@@ -3,7 +3,7 @@ require('dotenv').config({ path: '.env' });
 const morgan = require('morgan');
 const cors = require('cors');
 
-require('./config/db'); // Importa la configuración de la base de datos
+require('./config/db'); 
 
 const app = express();
 app.use(cors());

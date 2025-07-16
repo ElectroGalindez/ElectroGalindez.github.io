@@ -9,16 +9,19 @@ import OrderSuccess from "./pages/OrderSuccess";
 import Footer from "./components/Footer";
 import Login from './pages/Login';
 import Register from "./pages/Register";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import ProtectedRoute from "./components/ProtectedRoute";
 import Profile from "./pages/Profile";
+import AdminLayout from "./pages/admin/AdminLayout";
+import ProductAdmin from "./pages/admin/ProductAdmin";
+import CategoryAdmin from "./pages/admin/CategoryAdmin";
+import OrderAdmin from "./pages/admin/OrderAdmin";
+import UserAdmin from "./pages/admin/UserAdmin";
+import ProtectedRoute from "./components/ProtectedRoute";
+
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { AuthProvider } from "./context/AuthContext";
 
-import { AuthProvider } from "./context/AuthContext"; 
-import { AdminProvider } from "./context/AdminContext";
-
-import "./styles/App.css"; 
+import "./styles/App.css";
 
 function App() {
   return (
@@ -37,17 +40,21 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/profile" element={<Profile />} />
 
-            {/* Rutas admin protegidas */}
+            {/* 🛡️ Rutas protegidas para admin */}
             <Route
-              path="/admin/*"
+              path="/admin"
               element={
                 <ProtectedRoute roleRequired="admin">
-                  <AdminProvider>
-                    <AdminDashboard />
-                  </AdminProvider>
+                  <AdminLayout />
                 </ProtectedRoute>
               }
-            />
+            >
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="products" element={<ProductAdmin />} />
+              <Route path="categories" element={<CategoryAdmin />} />
+              <Route path="orders" element={<OrderAdmin />} />
+              <Route path="users" element={<UserAdmin />} />
+            </Route>
           </Routes>
         </main>
         <Footer />
