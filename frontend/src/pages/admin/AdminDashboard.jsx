@@ -1,38 +1,45 @@
 import React, { useState } from "react";
-import CategoryAdmin from "./CategoryAdmin";
+import Sidebar from "../../components/Sidebar";
 import ProductAdmin from "./ProductAdmin";
+import CategoryAdmin from "./CategoryAdmin";
 import OrderAdmin from "./OrderAdmin";
-import "../../styles/AdminDashboard.css"; // opcional
 
-const AdminDashboard = () => {
-  const [section, setSection] = useState("categories");
+import "../../styles/AdminDashboard.css";
 
-  const renderSection = () => {
-    switch (section) {
-      case "products":
-        return <ProductAdmin />;
-      case "orders":
-        return <OrderAdmin />;
-      case "categories":
-      default:
-        return <CategoryAdmin />;
-    }
+export default function AdminDashboard() {
+  const [section, setSection] = useState("products");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Cerrar sidebar al cambiar sección (en mobile)
+  const handleSectionChange = (sec) => {
+    setSection(sec);
+    setSidebarOpen(false);
   };
 
   return (
-    <div className="admin-dashboard">
-      <aside className="admin-sidebar">
-        <h2>Panel de Admin</h2>
-        <ul>
-          <li onClick={() => setSection("categories")}>Categorías</li>
-          <li onClick={() => setSection("products")}>Productos</li>
-          <li onClick={() => setSection("orders")}>Órdenes</li>
-        </ul>
-      </aside>
+    <>
+      {/* Botón hamburguesa para mobile */}
+      <button
+        className="sidebar-toggle"
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        aria-label="Toggle sidebar"
+      >
+        ☰
+      </button>
 
-      <main className="admin-content">{renderSection()}</main>
-    </div>
+      <div className="admin-dashboard">
+        <Sidebar
+          currentSection={section}
+          setSection={handleSectionChange}
+          className={sidebarOpen ? "open" : ""}
+        />
+
+        <main className="admin-content">
+          {section === "products" && <ProductAdmin />}
+          {section === "categories" && <CategoryAdmin />}
+          {section === "orders" && <OrderAdmin />}
+        </main>
+      </div>
+    </>
   );
-};
-
-export default AdminDashboard;
+}

@@ -1,29 +1,38 @@
-import React, { useEffect, useState } from "react";
-import "../../styles/AdminSection.css";
+// src/pages/admin/CategoryAdmin.jsx
+import React, { useState } from "react";
+import { useAdmin } from "../../context/AdminContext";
 
-const CategoryAdmin = () => {
-  const [categories, setCategories] = useState([]);
+export default function CategoryAdmin() {
+  const { categories, createCategory, deleteCategory } = useAdmin();
+  const [name, setName] = useState("");
 
-  const fetchCategories = async () => {
-    try {
-      const res = await fetch("http://localhost:3001/api/categories");
-      const data = await res.json();
-      setCategories(data.categories || []);
-    } catch (err) {
-      console.error("Error cargando categorías:", err);
-    }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!name) return;
+    await createCategory({ name });
+    setName("");
   };
-
-  useEffect(() => {
-    fetchCategories();
-  }, []);
 
   return (
     <div>
-      <h3>Gestión de Categorías</h3>
-      {/* Aquí puedes renderizar un form y la lista de categorías */}
+      <h2>Categorías</h2>
+      <form onSubmit={handleSubmit}>
+        <input
+          placeholder="Nombre"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+        <button type="submit">Crear</button>
+      </form>
+
+      <ul>
+        {categories.map((c) => (
+          <li key={c.id}>
+            {c.name}
+            <button onClick={() => deleteCategory(c.id)}>Eliminar</button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
-};
-
-export default CategoryAdmin;
+}

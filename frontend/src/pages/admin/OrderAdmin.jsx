@@ -1,48 +1,29 @@
-import React, { useEffect, useState } from "react";
-import "../../styles/AdminSection.css";
+// src/pages/admin/OrderAdmin.jsx
+import React from "react";
+import { useAdmin } from "../../context/AdminContext";
 
-const OrderAdmin = () => {
-  const [orders, setOrders] = useState([]);
-
-  const fetchOrders = async () => {
-    try {
-      const res = await fetch("http://localhost:3001/api/orders");
-      const data = await res.json();
-      setOrders(data.orders || []);
-    } catch (err) {
-      console.error("Error cargando órdenes:", err);
-    }
-  };
-
-  useEffect(() => {
-    fetchOrders();
-  }, []);
+export default function OrderAdmin() {
+  const { orders, updateOrderStatus } = useAdmin();
 
   return (
-    <div className="admin-section">
-      <h3>Gestión de Órdenes</h3>
-      <table className="admin-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Usuario</th>
-            <th>Total</th>
-            <th>Fecha</th>
-          </tr>
-        </thead>
-        <tbody>
-          {orders.map((order) => (
-            <tr key={order.id}>
-              <td>{order.id}</td>
-              <td>{order.user_id}</td>
-              <td>€{order.total}</td>
-              <td>{new Date(order.created_at).toLocaleString()}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div>
+      <h2>Órdenes</h2>
+      <ul>
+        {orders.map((o) => (
+          <li key={o.id}>
+            #{o.id} - Total: ${o.total} - Estado:
+            <select
+              value={o.status}
+              onChange={(e) => updateOrderStatus(o.id, e.target.value)}
+            >
+              <option value="pending">Pendiente</option>
+              <option value="processing">Procesando</option>
+              <option value="shipped">Enviado</option>
+              <option value="delivered">Entregado</option>
+            </select>
+          </li>
+        ))}
+      </ul>
     </div>
   );
-};
-
-export default OrderAdmin;
+}

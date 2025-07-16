@@ -1,4 +1,4 @@
-// App.jsx    
+// src/App.jsx
 import { Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
@@ -14,39 +14,47 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Profile from "./pages/Profile";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
 import { AuthProvider } from "./context/AuthContext"; 
+import { AdminProvider } from "./context/AdminContext";
+
 import "./styles/App.css"; 
 
 function App() {
   return (
     <div className="app-layout">
       <AuthProvider>
-        <div className="app-layout">
-          <Navbar />
-          <main className="app-main">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/products" element={<ProductList />} />
-              <Route path="/products/:id" element={<ProductDetail />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/success" element={<OrderSuccess />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute roleRequired="admin">
+        <Navbar />
+        <main className="app-main">
+          <Routes>
+            {/* Rutas públicas */}
+            <Route path="/" element={<Home />} />
+            <Route path="/products" element={<ProductList />} />
+            <Route path="/products/:id" element={<ProductDetail />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/success" element={<OrderSuccess />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/profile" element={<Profile />} />
+
+            {/* Rutas admin protegidas */}
+            <Route
+              path="/admin/*"
+              element={
+                <ProtectedRoute roleRequired="admin">
+                  <AdminProvider>
                     <AdminDashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="/profile" element={<Profile />} />
-            </Routes>
-          </main>
-          <Footer />
-          <ToastContainer position="top-right" autoClose={3000} />
-        </div>
+                  </AdminProvider>
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </main>
+        <Footer />
+        <ToastContainer position="top-right" autoClose={3000} />
       </AuthProvider>
-    </div>) ;
-  }
+    </div>
+  );
+}
+
 export default App;
