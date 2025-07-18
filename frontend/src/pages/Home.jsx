@@ -14,7 +14,7 @@ function Home() {
     try {
       const res = await fetch(url);
       const data = await res.json();
-      setProducts(data.products || []);
+      setProducts(data.products || data || []);
     } catch (err) {
       console.error('Error al cargar productos filtrados:', err);
     }

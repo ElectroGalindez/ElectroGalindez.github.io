@@ -28,9 +28,9 @@ export const AdminProvider = ({ children }) => {
 
       // Aquí ajusta según la estructura de tu API
       // Si la API devuelve { data: [...] }, extrae data
-      setProducts(prodData.data || prodData || []);
-      setCategories(catData.data || catData || []);
-      setOrders(orderData.data || orderData || []);
+      setProducts(prodData.products || []);
+      setCategories(catData.categories || []);
+      setOrders(orderData.orders || []);
     } catch (error) {
       console.error('Fetch error:', error);
     }

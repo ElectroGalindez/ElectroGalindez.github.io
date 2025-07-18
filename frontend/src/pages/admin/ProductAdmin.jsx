@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useAdmin } from "../../context/AdminContext";
 
 export default function ProductAdmin() {
+  
   const {
     products,
     categories,
@@ -31,6 +32,7 @@ export default function ProductAdmin() {
     } finally {
       setLoading(false);
     }
+    
   };
 
   return (

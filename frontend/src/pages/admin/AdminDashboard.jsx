@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import Sidebar from "../../components/Sidebar";
 import ProductAdmin from "./ProductAdmin";
 import CategoryAdmin from "./CategoryAdmin";
 import OrderAdmin from "./OrderAdmin";

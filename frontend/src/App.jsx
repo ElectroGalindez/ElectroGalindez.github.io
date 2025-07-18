@@ -11,6 +11,7 @@ import Login from './pages/Login';
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 import AdminLayout from "./pages/admin/AdminLayout";
+import Dashboard from "./pages/admin/AdminDashboard";
 import ProductAdmin from "./pages/admin/ProductAdmin";
 import CategoryAdmin from "./pages/admin/CategoryAdmin";
 import OrderAdmin from "./pages/admin/OrderAdmin";
@@ -22,6 +23,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { AuthProvider } from "./context/AuthContext";
 
 import "./styles/App.css";
+import { AdminProvider } from "./context/AdminContext";
 
 function App() {
   return (
@@ -45,7 +47,9 @@ function App() {
               path="/admin"
               element={
                 <ProtectedRoute roleRequired="admin">
-                  <AdminLayout />
+                  <AdminProvider>
+                    <AdminLayout />
+                  </AdminProvider>
                 </ProtectedRoute>
               }
             >
