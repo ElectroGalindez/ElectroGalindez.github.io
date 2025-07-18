@@ -1,0 +1,68 @@
+/* src/styles/Sidebar.css */
+.admin-sidebar {
+  width: 250px;
+  background-color: #1e1e2f;
+  color: white;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  padding: 20px;
+  transition: transform 0.3s ease-in-out;
+  z-index: 999;
+}
+
+.admin-sidebar h2 {
+  margin-bottom: 2rem;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.admin-sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.admin-sidebar a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background 0.2s ease;
+  padding: 10px;
+  border-radius: 6px;
+}
+
+.admin-sidebar a:hover {
+  background-color: #33334d;
+}
+
+.sidebar-toggle {
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  background: transparent;
+  border: none;
+  color: rgb(0, 0, 0);
+  font-size: 1.8rem;
+  z-index: 1000;
+  display: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sidebar-toggle {
+    display: block;
+  }
+
+  .admin-sidebar {
+    transform: translateX(-100%);
+  }
+
+  .admin-sidebar.open {
+    transform: translateX(0);
+  }
+}

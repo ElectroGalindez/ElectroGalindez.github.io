@@ -7,30 +7,32 @@ export const AdminProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [users, setUsers] = useState([]);
 
   const API_BASE = 'http://localhost:3001';
 
   const fetchAllData = async () => {
     try {
-      const [prodRes, catRes, orderRes] = await Promise.all([
+      const [prodRes, catRes, orderRes, userRes] = await Promise.all([
         fetch(`${API_BASE}/api/products`),
         fetch(`${API_BASE}/api/categories`),
-        fetch(`${API_BASE}/api/orders`)
+        fetch(`${API_BASE}/api/orders`),
+        fetch(`${API_BASE}/api/users`)
       ]);
 
-      if (!prodRes.ok || !catRes.ok || !orderRes.ok) {
+      if (!prodRes.ok || !catRes.ok || !orderRes.ok || !userRes.ok) {
         throw new Error('Error fetching data');
       }
 
       const prodData = await prodRes.json();
       const catData = await catRes.json();
       const orderData = await orderRes.json();
+      const userData = await userRes.json();
 
-      // Aquí ajusta según la estructura de tu API
-      // Si la API devuelve { data: [...] }, extrae data
       setProducts(prodData.products || []);
       setCategories(catData.categories || []);
       setOrders(orderData.orders || []);
+      setUsers(userData.users || userData || []);
     } catch (error) {
       console.error('Fetch error:', error);
     }
@@ -148,6 +150,7 @@ export const AdminProvider = ({ children }) => {
         products,
         categories,
         orders,
+        users,
         fetchAllData,
         createProduct,
         updateProduct,
@@ -162,3 +165,4 @@ export const AdminProvider = ({ children }) => {
     </AdminContext.Provider>
   );
 };
+

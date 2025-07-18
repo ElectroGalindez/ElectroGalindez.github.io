@@ -1,40 +1,68 @@
-/* src/styles/AdminDashboard.css */
-
-.dashboard-home {
-  padding: 2rem;
+.dashboard-container {
+  padding: 1rem 2rem;
 }
 
-.dashboard-cards {
+.cards-row {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1.5rem;
-  margin-top: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
 }
 
 .card {
-  background-color: white;
-  border-radius: 10px;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+  background: #fff;
+  border-radius: 8px;
   padding: 1rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.chart-container {
+  background: #fff;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.chart-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 1rem;
-  transition: transform 0.2s ease;
 }
 
-.card:hover {
-  transform: translateY(-3px);
+.chart-header select {
+  padding: 0.3rem;
+  border-radius: 4px;
+  border: 1px solid #ccc;
 }
 
-.card .icon {
-  font-size: 2rem;
-  color: #007bff;
+.export-buttons {
+  margin-top: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
 }
 
-.chart-section {
-  margin-top: 3rem;
-  background-color: #fff;
-  border-radius: 10px;
-  padding: 2rem;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+.export-buttons button {
+  padding: 0.4rem 0.8rem;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.export-buttons button:hover {
+  background: #0056b3;
+}
+
+@media (max-width: 768px) {
+  .charts-row {
+    grid-template-columns: 1fr;
+  }
 }
