@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { FaUsers, FaBoxOpen, FaReceipt, FaMoneyBillWave } from 'react-icons/fa';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import "../../styles/AdminDashboard.css";
+import "../../styles/DashboardHome.css";
 
 function DashboardHome() {
   const [summary, setSummary] = useState({

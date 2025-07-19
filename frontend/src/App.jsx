@@ -15,7 +15,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 
-import Dashboard from "./pages/admin/AdminDashboard";
+import Dashboard from "./pages/admin/DashboardHome";
 import ProductAdmin from "./pages/admin/ProductAdmin";
 import CategoryAdmin from "./pages/admin/CategoryAdmin";
 import OrderAdmin from "./pages/admin/OrderAdmin";
