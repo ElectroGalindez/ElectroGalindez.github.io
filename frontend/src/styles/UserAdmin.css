@@ -1,0 +1,157 @@
+/* styles/UserAdmin.css */
+.admin-panel {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 25px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+}
+
+.admin-panel h2 {
+  text-align: center;
+  margin-bottom: 25px;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.admin-toolbar {
+  margin-bottom: 25px;
+}
+
+.admin-toolbar input {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+  transition: all 0.3s;
+}
+
+.admin-toolbar input:focus {
+  border-color: #3498db;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+}
+
+.admin-table {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #eaeaea;
+}
+
+.admin-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-table th {
+  background-color: #f8f9fa;
+  padding: 15px;
+  text-align: left;
+  font-weight: 600;
+  color: #2c3e50;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.admin-table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.admin-table tr:hover {
+  background-color: #f8f9ff;
+}
+
+.admin-table select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+  cursor: pointer;
+  width: 100%;
+  max-width: 150px;
+  transition: all 0.2s;
+}
+
+.admin-table select:focus {
+  border-color: #3498db;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.no-results {
+  text-align: center;
+  padding: 30px;
+  color: #7f8c8d;
+  font-style: italic;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 25px;
+  gap: 6px;
+}
+
+.pagination button {
+  padding: 8px 15px;
+  border: 1px solid #ddd;
+  background-color: white;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.pagination button:hover:not(:disabled) {
+  background-color: #f8f9fa;
+  border-color: #3498db;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination button.active {
+  background-color: #3498db;
+  color: white;
+  border-color: #3498db;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .admin-panel {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-table {
+    font-size: 14px;
+  }
+  
+  .admin-table th, 
+  .admin-table td {
+    padding: 10px 12px;
+  }
+  
+  .pagination {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-panel {
+    padding: 15px;
+  }
+  
+  .admin-toolbar input {
+    padding: 10px 12px;
+  }
+  
+  .pagination button {
+    padding: 6px 10px;
+    min-width: 36px;
+  }
+}

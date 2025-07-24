@@ -35,7 +35,7 @@ function Navbar() {
   return (
     <header className="navbar">
       <div className="navbar__logo">
-          <img src="/logo.png" alt="Logo ElectroGalíndez" />
+          <img src="./ElectoGalíndez.png" alt="Logo ElectroGalíndez"/>
       </div>
       <div className="navbar__title">
         <Link to="/">ElectroGalíndez</Link>

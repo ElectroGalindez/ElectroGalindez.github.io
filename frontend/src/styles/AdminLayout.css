@@ -1,38 +1,26 @@
-
 .admin-layout {
   display: flex;
   min-height: 100vh;
 }
 
-.admin-sidebar {
-  width: 220px;
-  background-color: #1f2937;
-  color: white;
-  padding: 1rem;
-  height: 100vh;
-  position: fixed;
-  top: 0;
-  left: 0;
-  overflow-y: auto;
-}
-
-.admin-sidebar nav a {
-  display: block;
-  color: white;
-  text-decoration: none;
-  margin: 10px 0;
-  padding: 0.5rem;
-  border-radius: 5px;
-  transition: background 0.2s;
-}
-
-.admin-sidebar nav a:hover {
-  background-color: #374151;
-}
-
 .admin-content {
-  margin-left: 220px;
-  flex-grow: 1;
-  padding: 2rem;
-  background-color: #f9fafb;
+  flex: 1;
+  padding: 20px;
+  margin-left: 0;
+  transition: margin-left 0.3s ease;
+}
+
+@media (min-width: 769px) {
+  .admin-sidebar {
+    transform: translateX(0);
+  }
+  
+  .admin-content {
+    margin-left: 250px;
+  }
+  
+  .sidebar-toggle, 
+  .sidebar-overlay {
+    display: none !important;
+  }
 }

@@ -1,5 +1,4 @@
-// App.jsx
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { AdminProvider } from "./context/AdminContext";
 
@@ -15,7 +14,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 
-import Dashboard from "./pages/admin/DashboardHome";
+import DashboardHome from "./pages/admin/DashboardHome";
 import ProductAdmin from "./pages/admin/ProductAdmin";
 import CategoryAdmin from "./pages/admin/CategoryAdmin";
 import OrderAdmin from "./pages/admin/OrderAdmin";
@@ -53,7 +52,9 @@ function App() {
             </ProtectedRoute>
           }
         >
-          <Route path="dashboard" element={<Dashboard />} />
+          {/* Redirección automática a dashboard */}
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<DashboardHome />} />
           <Route path="products" element={<ProductAdmin />} />
           <Route path="categories" element={<CategoryAdmin />} />
           <Route path="orders" element={<OrderAdmin />} />

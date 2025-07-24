@@ -1,25 +1,33 @@
-// src/context/StoreContext.jsx
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { useAuth } from "./AuthContext";
 
 const StoreContext = createContext();
 
 export const StoreProvider = ({ children }) => {
   const [categories, setCategories] = useState([]);
-  const [user, setUser] = useState(() => {
-    const storedUser = localStorage.getItem("user");
-    return storedUser ? JSON.parse(storedUser) : null;
-  });
-
-  // Cargar categorías una vez al inicio
+  const { user } = useAuth();
+  
   useEffect(() => {
-    fetch("http://localhost:3001/api/categories")
-      .then((res) => res.json())
-      .then((data) => setCategories(data))
-      .catch((err) => console.error("Error cargando categorías:", err));
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/api/categories');
+        
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        setCategories(data);
+      } catch (error) {
+        console.error("Error cargando categorías:", error.message);
+      }
+    };
+
+    fetchCategories();
   }, []);
 
   return (
-    <StoreContext.Provider value={{ categories, user, setUser }}>
+    <StoreContext.Provider value={{ categories, user }}>
       {children}
     </StoreContext.Provider>
   );

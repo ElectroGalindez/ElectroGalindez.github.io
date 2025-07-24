@@ -3,59 +3,66 @@ const pool = require("../config/db");
 
 exports.getAdminSummary = async (req, res) => {
   try {
-    // Total de usuarios
+    // 1. Obtener total de usuarios
     const usersRes = await pool.query("SELECT COUNT(*) FROM users");
     const totalUsers = parseInt(usersRes.rows[0].count);
 
-    // Total de productos
+    // 2. Obtener total de productos
     const productsRes = await pool.query("SELECT COUNT(*) FROM products");
     const totalProducts = parseInt(productsRes.rows[0].count);
 
-    // Órdenes completadas y pendientes
+    // 3. Obtener conteo de órdenes por estado (usando los valores correctos)
     const ordersRes = await pool.query(`
       SELECT 
-        COUNT(*) FILTER (WHERE status = 'pendiente') AS pending,
-        COUNT(*) FILTER (WHERE status = 'completada') AS completed
+        COUNT(*) FILTER (WHERE status = 'pending') AS pending,
+        COUNT(*) FILTER (WHERE status = 'paid') AS paid,
+        COUNT(*) FILTER (WHERE status = 'shipped') AS shipped,
+        COUNT(*) FILTER (WHERE status = 'cancelled') AS cancelled
       FROM orders
     `);
-    const pendingOrders = parseInt(ordersRes.rows[0].pending);
-    const completedOrders = parseInt(ordersRes.rows[0].completed);
-
-    // Ingresos totales
+    
+    // 4. Calcular ingresos totales (solo órdenes pagadas o enviadas)
     const incomeRes = await pool.query(`
-      SELECT SUM(oi.quantity * p.price) AS total
-      FROM order_items oi
-      JOIN products p ON oi.product_id = p.id
+      SELECT COALESCE(SUM(total), 0) AS total 
+      FROM orders 
+      WHERE status IN ('paid', 'shipped')
     `);
-    const totalIncome = parseFloat(incomeRes.rows[0].total || 0);
 
-    // Ventas semanales
+    // 5. Obtener ventas semanales (solo órdenes pagadas o enviadas)
     const salesRes = await pool.query(`
+      WITH date_series AS (
+        SELECT generate_series(CURRENT_DATE - INTERVAL '6 days', CURRENT_DATE, '1 day') AS date
+      )
       SELECT 
-        TO_CHAR(o.created_at, 'Dy') AS day,
-        SUM(oi.quantity) AS sales
-      FROM orders o
-      JOIN order_items oi ON o.id = oi.order_id
-      GROUP BY day
-      ORDER BY MIN(o.created_at)
+        TO_CHAR(ds.date, 'Dy') AS day,
+        COALESCE(SUM(o.total), 0) AS sales
+      FROM date_series ds
+      LEFT JOIN orders o ON DATE(o.created_at) = ds.date 
+        AND o.status IN ('paid', 'shipped')
+      GROUP BY ds.date
+      ORDER BY ds.date
     `);
 
-    const weeklySales = salesRes.rows.map(row => ({
-      day: row.day,
-      sales: parseInt(row.sales),
-    }));
-
+    // 6. Preparar respuesta
     res.json({
       users: totalUsers,
       products: totalProducts,
-      pendingOrders,
-      completedOrders,
-      totalIncome,
-      weeklySales,
+      pendingOrders: parseInt(ordersRes.rows[0].pending || 0),
+      paidOrders: parseInt(ordersRes.rows[0].paid || 0),
+      shippedOrders: parseInt(ordersRes.rows[0].shipped || 0),
+      cancelledOrders: parseInt(ordersRes.rows[0].cancelled || 0),
+      totalIncome: parseFloat(incomeRes.rows[0].total || 0),
+      weeklySales: salesRes.rows.map(row => ({
+        day: row.day,
+        sales: parseInt(row.sales)
+      }))
     });
 
   } catch (err) {
     console.error("Error al obtener resumen:", err);
-    res.status(500).json({ error: "Error interno del servidor" });
+    res.status(500).json({ 
+      error: "Error interno del servidor",
+      details: err.message
+    });
   }
 };
