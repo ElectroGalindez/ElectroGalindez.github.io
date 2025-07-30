@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import 'react-toastify/dist/ReactToastify.css';
 import '../styles/Auth.css';
-import { useAuth } from "../context/AuthContext"; // Usamos el contexto para login
+import { useAuth } from "../context/AuthContext";
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -14,7 +13,6 @@ function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    // Validación de campos antes de hacer la petición
     if (!/\S+@\S+\.\S+/.test(email)) {
       setError('Correo electrónico no válido');
       return;
@@ -24,29 +22,30 @@ function Login() {
       const res = await fetch('http://localhost:3001/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }) // Enviamos solo email y password
+        body: JSON.stringify({ email, password })
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.message || 'Email o contraseña incorrectos');
+        setError(data.error || data.message || 'Email o contraseña incorrectos');
         return;
       }
 
-      // Guardamos los datos en localStorage
       const { user, token } = data;
-      localStorage.setItem('user', JSON.stringify(user));
-      localStorage.setItem('token', token);
 
-      // Llamamos al contexto para guardar el usuario y token
+      if (!user.id) {
+        setError('Error: usuario sin ID');
+        return;
+      }
+
       login(user, token);
 
       setError('');
-      navigate('/'); // Redirige al home
-
+      navigate('/');
     } catch (err) {
       setError('Error de red, intenta nuevamente');
+      console.error("Error de conexión:", err);
     }
   };
 
@@ -71,7 +70,8 @@ function Login() {
         />
 
         <button type="submit">Entrar</button>
-        {error && <p className="error-message">{error}</p>} {/* Mostrar el error aquí */}
+        
+        {error && <p className="error-message">{error}</p>}
       </form>
 
       <p className="auth-switch">

@@ -1,34 +1,41 @@
+// Cart.jsx
 import { useNavigate } from "react-router-dom";
 import { createOrder } from "../services/api";
 import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext"; 
 import "../styles/Cart.css";
-
 
 function Cart() {
   const { cart, removeFromCart, clearCart } = useCart();
+  const { user } = useAuth(); 
   const navigate = useNavigate();
 
   const total = cart
     .reduce((sum, item) => sum + item.product.price * item.quantity, 0)
-    .toFixed(2); 
+    .toFixed(2);
 
-  const handleOrder = async () => {
-    const user_id = 1; 
-    const items = cart.map((item) => ({
-      product_id: item.product.id,
-      quantity: item.quantity,
-      price: item.product.price,
-    }));
+const handleOrder = async () => {
+  if (!user) {
+    alert("Debes iniciar sesión");
+    navigate("/login");
+    return;
+  }
 
-    try {
-      await createOrder(user_id, items);
-      clearCart();
-      navigate("/success");
-    } catch (err) {
-      console.error("Error al crear orden:", err);
-      alert("Hubo un error al procesar tu orden.");
-    }
-  };
+  const items = cart.map((item) => ({
+    product_id: item.product.id,
+    quantity: item.quantity,
+    price: item.product.price,
+  }));
+  
+  try {
+    await createOrder(items); 
+    clearCart();
+    navigate("/success");
+  } catch (err) {
+    console.error("Error al crear orden:", err);
+    alert(err.message);
+  }
+};
 
   return (
     <div className="cart-container">
@@ -50,7 +57,9 @@ function Cart() {
             ))}
           </ul>
           <p className="cart-total">Total: €{total}</p>
-          <button className="checkout-button" onClick={handleOrder}>Realizar pedido</button>
+          <button className="checkout-button" onClick={handleOrder}>
+            Realizar pedido
+          </button>
         </>
       )}
     </div>

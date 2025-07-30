@@ -42,30 +42,33 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validación básica
     if (!email || !password) {
       return res.status(400).json({ error: 'Email y contraseña son requeridos' });
     }
 
-    // Verificar si el usuario existe
     const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     const user = result.rows[0];
     if (!user) {
       return res.status(400).json({ error: 'Credenciales inválidas' });
     }
 
-    // Verificar la contraseña
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(400).json({ error: 'Credenciales inválidas' });
     }
 
-    const token = jwt.sign({ email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
     res.status(200).json({
       success: true,
       message: 'Login exitoso',
-      token: token,
+      token,
       user: {
+        id: user.id,
         email: user.email,
         role: user.role,
       },

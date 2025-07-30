@@ -23,8 +23,11 @@ exports.getOrderById = async (req, res) => {
 };
 
 exports.createOrder = async (req, res) => {
-  const { user_id, items } = req.body;
-
+  const { items } = req.body;
+  const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Acceso denegado. No estás autenticado.' });
+    }
   try {
     await db.query('BEGIN');
 
@@ -35,7 +38,7 @@ exports.createOrder = async (req, res) => {
 
     const orderResult = await db.query(
       'INSERT INTO orders (user_id, total) VALUES ($1, $2) RETURNING *',
-      [user_id, total]
+      [userId, total]
     );
 
     const orderId = orderResult.rows[0].id;
@@ -48,10 +51,10 @@ exports.createOrder = async (req, res) => {
     }
 
     await db.query('COMMIT');
-    res.status(201).json({ message: 'Order created', order_id: orderId });
+    res.status(201).json({ message: 'Orden creada', order_id: orderId });
   } catch (err) {
     await db.query('ROLLBACK');
-    res.status(500).json({ error: 'Error creating order' });
+    res.status(500).json({ error: 'Error creando orden' });
   }
 };
 
