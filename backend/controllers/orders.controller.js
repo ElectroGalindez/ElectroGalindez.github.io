@@ -1,9 +1,13 @@
-const db = require('../config/db');
+const Order = require('../models/Order');
+const Product = require('../models/Product');
 
 exports.getAllOrders = async (req, res) => {
   try {
-    const result = await db.query('SELECT * FROM orders ORDER BY created_at DESC');
-    res.json(result.rows);
+    const orders = await Order.find()
+      .populate('user', 'email')
+      .populate('items.product', 'name price images')
+      .sort({ createdAt: -1 });
+    res.json(orders);
   } catch (err) {
     res.status(500).json({ error: 'Error fetching orders' });
   }
@@ -12,49 +16,101 @@ exports.getAllOrders = async (req, res) => {
 exports.getOrderById = async (req, res) => {
   const { id } = req.params;
   try {
-    const order = await db.query('SELECT * FROM orders WHERE id = $1', [id]);
-    const items = await db.query('SELECT * FROM order_items WHERE order_id = $1', [id]);
-    if (order.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
+    const order = await Order.findById(id)
+      .populate('user', 'email')
+      .populate('items.product', 'name price images');
+    
+    if (!order) return res.status(404).json({ error: 'Order not found' });
 
-    res.json({ ...order.rows[0], items: items.rows });
+    res.json(order);
   } catch (err) {
     res.status(500).json({ error: 'Error fetching order' });
   }
 };
 
-exports.createOrder = async (req, res) => {
-  const { items } = req.body;
-  const userId = req.user?.id;
+exports.getUserOrders = async (req, res) => {
+  try {
+    const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ error: 'Acceso denegado. No estás autenticado.' });
     }
-  try {
-    await db.query('BEGIN');
 
-    let total = 0;
+    const orders = await Order.find({ user: userId })
+      .populate('items.product', 'name price images')
+      .sort({ createdAt: -1 });
+
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ error: 'Error fetching user orders' });
+  }
+};
+
+exports.createOrder = async (req, res) => {
+  const { items, shippingAddress, paymentMethod, notes } = req.body;
+  const userId = req.user?.id;
+  
+  if (!userId) {
+    return res.status(401).json({ error: 'Acceso denegado. No estás autenticado.' });
+  }
+
+  try {
+    // Validar y calcular el total
+    let totalAmount = 0;
+    const orderItems = [];
+
     for (const item of items) {
-      total += item.price * item.quantity;
+      const product = await Product.findById(item.productId);
+      if (!product) {
+        return res.status(400).json({ error: `Producto ${item.productId} no encontrado` });
+      }
+
+      if (product.stock < item.quantity) {
+        return res.status(400).json({ error: `Stock insuficiente para ${product.name}` });
+      }
+
+      const itemTotal = product.price * item.quantity;
+      totalAmount += itemTotal;
+
+      orderItems.push({
+        product: product._id,
+        quantity: item.quantity,
+        price: product.price
+      });
     }
 
-    const orderResult = await db.query(
-      'INSERT INTO orders (user_id, total) VALUES ($1, $2) RETURNING *',
-      [userId, total]
-    );
+    // Crear la orden
+    const order = new Order({
+      user: userId,
+      items: orderItems,
+      totalAmount,
+      shippingAddress,
+      paymentMethod,
+      notes
+    });
 
-    const orderId = orderResult.rows[0].id;
+    const savedOrder = await order.save();
 
+    // Actualizar stock de productos
     for (const item of items) {
-      await db.query(
-        'INSERT INTO order_items (order_id, product_id, quantity, price) VALUES ($1, $2, $3, $4)',
-        [orderId, item.product_id, item.quantity, item.price]
+      await Product.findByIdAndUpdate(
+        item.productId,
+        { $inc: { stock: -item.quantity } }
       );
     }
 
-    await db.query('COMMIT');
-    res.status(201).json({ message: 'Orden creada', order_id: orderId });
+    // Poblar la orden antes de enviarla
+    const populatedOrder = await Order.findById(savedOrder._id)
+      .populate('user', 'email')
+      .populate('items.product', 'name price images');
+
+    res.status(201).json({
+      success: true,
+      message: 'Orden creada exitosamente',
+      order: populatedOrder
+    });
   } catch (err) {
-    await db.query('ROLLBACK');
-    res.status(500).json({ error: 'Error creando orden' });
+    console.error('Error creating order:', err);
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
 
@@ -62,68 +118,44 @@ exports.updateOrderStatus = async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
 
-  // Validar que el estado sea uno de los permitidos
-  const validStatuses = ['pending', 'paid', 'shipped', 'cancelled'];
+  const validStatuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
   if (!validStatuses.includes(status)) {
-    return res.status(400).json({ 
-      error: 'Estado inválido',
-      validStatuses
-    });
+    return res.status(400).json({ error: 'Estado de orden inválido' });
   }
 
   try {
-    const result = await db.query(
-      'UPDATE orders SET status = $1 WHERE id = $2 RETURNING *',
-      [status, id]
-    );
-    
-    if (result.rows.length === 0) {
+    const order = await Order.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true }
+    ).populate('user', 'email')
+     .populate('items.product', 'name price');
+
+    if (!order) {
       return res.status(404).json({ error: 'Orden no encontrada' });
     }
-    
-    res.json(result.rows[0]);
+
+    res.json({
+      success: true,
+      message: 'Estado de orden actualizado exitosamente',
+      order
+    });
   } catch (err) {
-    res.status(500).json({ error: 'Error actualizando estado' });
+    res.status(500).json({ error: 'Error updating order status' });
   }
 };
 
 exports.deleteOrder = async (req, res) => {
   const { id } = req.params;
-
   try {
-    const check = await db.query('SELECT id FROM orders WHERE id = $1', [id]);
-    if (check.rows.length === 0) {
-      return res.status(404).json({ error: 'Orden no encontrada' });
-    }
-
-    await db.query('DELETE FROM order_items WHERE order_id = $1', [id]);
-
-    await db.query('DELETE FROM orders WHERE id = $1', [id]);
-
-    res.json({ message: 'Orden eliminada correctamente', orderId: id });
+    const order = await Order.findByIdAndDelete(id);
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    
+    res.json({ 
+      success: true,
+      message: 'Order deleted successfully' 
+    });
   } catch (err) {
-    console.error('Error deleting order:', err);
-    res.status(500).json({ error: 'Error al eliminar la orden' });
-  }
-};
-exports.getAllOrders = async (req, res) => {
-  try {
-    const result = await db.query(`
-      SELECT 
-        o.id,
-        o.user_id,
-        o.total,
-        o.status,
-        o.created_at,
-        u.email AS user_email
-      FROM orders o
-      LEFT JOIN users u ON o.user_id = u.id
-      ORDER BY o.created_at DESC
-    `);
-
-    res.json(result.rows);
-  } catch (err) {
-    console.error('Error fetching orders:', err);
-    res.status(500).json({ error: 'Error fetching orders' });
+    res.status(500).json({ error: 'Error deleting order' });
   }
 };

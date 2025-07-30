@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const pool = require('../config/db');
+const User = require('../models/User');
 
 // REGISTRO DE USUARIO
 const register = async (req, res) => {
@@ -13,22 +13,30 @@ const register = async (req, res) => {
     }
 
     // Verificar si el usuario ya existe
-    const existingUser = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-    if (existingUser.rows.length > 0) {
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
       return res.status(400).json({ error: 'El usuario ya existe' });
     }
 
     // Hash de la contraseña
     const hashedPassword = await bcrypt.hash(password, 10);
-    // Insertar el nuevo usuario en la base de datos
-    await pool.query('INSERT INTO users (email, password, role) VALUES ($1, $2, $3)', [email, hashedPassword, role]);
+    
+    // Crear el nuevo usuario
+    const newUser = new User({
+      email,
+      password: hashedPassword,
+      role
+    });
+    
+    await newUser.save();
 
     // retornar respuesta exitosa
     res.status(201).json({
       success: true,
       message: 'Usuario registrado exitosamente',
       user: {
-        email: { email, role },
+        email,
+        role
       },
     });
   } catch (error) {
@@ -46,8 +54,7 @@ const login = async (req, res) => {
       return res.status(400).json({ error: 'Email y contraseña son requeridos' });
     }
 
-    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-    const user = result.rows[0];
+    const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ error: 'Credenciales inválidas' });
     }
@@ -58,7 +65,7 @@ const login = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
+      { id: user._id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -68,7 +75,7 @@ const login = async (req, res) => {
       message: 'Login exitoso',
       token,
       user: {
-        id: user.id,
+        id: user._id,
         email: user.email,
         role: user.role,
       },
@@ -88,8 +95,7 @@ const getProfile = async (req, res) => {
       return res.status(400).json({ error: 'Email es requerido' });
     }
 
-    const result = await pool.query('SELECT email FROM users WHERE email = $1', [email]);
-    const user = result.rows[0];
+    const user = await User.findOne({ email }).select('-password');
 
     if (!user) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
@@ -108,8 +114,8 @@ const getProfile = async (req, res) => {
 
 const getAllUsers = async (req, res) => {
   try {
-    const result = await pool.query('SELECT id, email, role FROM users ORDER BY id');
-    res.status(200).json(result.rows);
+    const users = await User.find().select('_id email role').sort({ createdAt: -1 });
+    res.status(200).json(users);
   } catch (error) {
     console.error('Error al obtener usuarios:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
@@ -120,30 +126,31 @@ const updateUserRole = async (req, res) => {
   const { id } = req.params;
   const { role } = req.body;
 
-      if (!['admin', 'user'].includes(role)) {
-        return res.status(400).json({ error: 'Rol inválido' });
-      }
+  if (!['admin', 'user'].includes(role)) {
+    return res.status(400).json({ error: 'Rol inválido' });
+  }
 
-      try {
-        const result = await pool.query(
-          'UPDATE users SET role = $1 WHERE id = $2 RETURNING id, email, role',
-          [role, id]
-        );
+  try {
+    const user = await User.findByIdAndUpdate(
+      id,
+      { role },
+      { new: true }
+    ).select('_id email role');
 
-        if (result.rows.length === 0) {
-          return res.status(404).json({ error: 'Usuario no encontrado' });
-        }
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
 
-        res.status(200).json({
-          success: true,
-          message: 'Rol actualizado exitosamente',
-          user: result.rows[0],
-        });
-      } catch (error) {
-        console.error('Error al actualizar rol:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
-      }
-    };
+    res.status(200).json({
+      success: true,
+      message: 'Rol actualizado exitosamente',
+      user: user,
+    });
+  } catch (error) {
+    console.error('Error al actualizar rol:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
 
 module.exports = {
   register,

@@ -1,68 +1,186 @@
 // controllers/admin.controller.js
-const pool = require("../config/db");
+const User = require("../models/User");
+const Product = require("../models/Product");
+const Order = require("../models/Order");
+const Category = require("../models/Category");
 
 exports.getAdminSummary = async (req, res) => {
   try {
     // 1. Obtener total de usuarios
-    const usersRes = await pool.query("SELECT COUNT(*) FROM users");
-    const totalUsers = parseInt(usersRes.rows[0].count);
+    const totalUsers = await User.countDocuments();
 
     // 2. Obtener total de productos
-    const productsRes = await pool.query("SELECT COUNT(*) FROM products");
-    const totalProducts = parseInt(productsRes.rows[0].count);
+    const totalProducts = await Product.countDocuments({ active: true });
 
-    // 3. Obtener conteo de órdenes por estado (usando los valores correctos)
-    const ordersRes = await pool.query(`
-      SELECT 
-        COUNT(*) FILTER (WHERE status = 'pending') AS pending,
-        COUNT(*) FILTER (WHERE status = 'paid') AS paid,
-        COUNT(*) FILTER (WHERE status = 'shipped') AS shipped,
-        COUNT(*) FILTER (WHERE status = 'cancelled') AS cancelled
-      FROM orders
-    `);
-    
-    // 4. Calcular ingresos totales (solo órdenes pagadas o enviadas)
-    const incomeRes = await pool.query(`
-      SELECT COALESCE(SUM(total), 0) AS total 
-      FROM orders 
-      WHERE status IN ('paid', 'shipped')
-    `);
+    // 3. Obtener total de categorías
+    const totalCategories = await Category.countDocuments({ active: true });
 
-    // 5. Obtener ventas semanales (solo órdenes pagadas o enviadas)
-    const salesRes = await pool.query(`
-      WITH date_series AS (
-        SELECT generate_series(CURRENT_DATE - INTERVAL '6 days', CURRENT_DATE, '1 day') AS date
-      )
-      SELECT 
-        TO_CHAR(ds.date, 'Dy') AS day,
-        COALESCE(SUM(o.total), 0) AS sales
-      FROM date_series ds
-      LEFT JOIN orders o ON DATE(o.created_at) = ds.date 
-        AND o.status IN ('paid', 'shipped')
-      GROUP BY ds.date
-      ORDER BY ds.date
-    `);
+    // 4. Obtener conteo de órdenes por estado
+    const orderStats = await Order.aggregate([
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 }
+        }
+      }
+    ]);
 
-    // 6. Preparar respuesta
-    res.json({
-      users: totalUsers,
-      products: totalProducts,
-      pendingOrders: parseInt(ordersRes.rows[0].pending || 0),
-      paidOrders: parseInt(ordersRes.rows[0].paid || 0),
-      shippedOrders: parseInt(ordersRes.rows[0].shipped || 0),
-      cancelledOrders: parseInt(ordersRes.rows[0].cancelled || 0),
-      totalIncome: parseFloat(incomeRes.rows[0].total || 0),
-      weeklySales: salesRes.rows.map(row => ({
-        day: row.day,
-        sales: parseInt(row.sales)
-      }))
+    const ordersByStatus = {
+      pending: 0,
+      confirmed: 0,
+      processing: 0,
+      shipped: 0,
+      delivered: 0,
+      cancelled: 0
+    };
+
+    orderStats.forEach(stat => {
+      ordersByStatus[stat._id] = stat.count;
     });
 
-  } catch (err) {
-    console.error("Error al obtener resumen:", err);
-    res.status(500).json({ 
-      error: "Error interno del servidor",
-      details: err.message
+    // 5. Calcular ingresos totales (solo órdenes confirmadas, procesando, enviadas o entregadas)
+    const incomeResult = await Order.aggregate([
+      {
+        $match: {
+          status: { $in: ['confirmed', 'processing', 'shipped', 'delivered'] }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalIncome: { $sum: "$totalAmount" }
+        }
+      }
+    ]);
+
+    const totalIncome = incomeResult.length > 0 ? incomeResult[0].totalIncome : 0;
+
+    // 6. Obtener productos con bajo stock (menos de 10 unidades)
+    const lowStockProducts = await Product.find({ 
+      stock: { $lt: 10 }, 
+      active: true 
+    }).select('name stock').limit(5);
+
+    // 7. Obtener órdenes recientes
+    const recentOrders = await Order.find()
+      .populate('user', 'email')
+      .populate('items.product', 'name')
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    // 8. Productos más vendidos
+    const topProducts = await Order.aggregate([
+      { $unwind: "$items" },
+      {
+        $group: {
+          _id: "$items.product",
+          totalSold: { $sum: "$items.quantity" }
+        }
+      },
+      { $sort: { totalSold: -1 } },
+      { $limit: 5 },
+      {
+        $lookup: {
+          from: "products",
+          localField: "_id",
+          foreignField: "_id",
+          as: "product"
+        }
+      },
+      { $unwind: "$product" },
+      {
+        $project: {
+          name: "$product.name",
+          totalSold: 1
+        }
+      }
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        summary: {
+          totalUsers,
+          totalProducts,
+          totalCategories,
+          totalIncome,
+          ordersByStatus
+        },
+        lowStockProducts,
+        recentOrders,
+        topProducts
+      }
+    });
+  } catch (error) {
+    console.error("Error obteniendo resumen admin:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error interno del servidor"
+    });
+  }
+};
+
+exports.getDashboardStats = async (req, res) => {
+  try {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+
+    // Ventas del mes actual
+    const currentMonthSales = await Order.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startOfMonth },
+          status: { $in: ['confirmed', 'processing', 'shipped', 'delivered'] }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: "$totalAmount" },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // Ventas del mes pasado
+    const lastMonthSales = await Order.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth },
+          status: { $in: ['confirmed', 'processing', 'shipped', 'delivered'] }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: "$totalAmount" },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const currentSales = currentMonthSales[0] || { total: 0, count: 0 };
+    const lastSales = lastMonthSales[0] || { total: 0, count: 0 };
+
+    const salesGrowth = lastSales.total > 0 
+      ? ((currentSales.total - lastSales.total) / lastSales.total * 100).toFixed(1)
+      : 0;
+
+    res.status(200).json({
+      success: true,
+      data: {
+        currentMonth: currentSales,
+        lastMonth: lastSales,
+        salesGrowth: parseFloat(salesGrowth)
+      }
+    });
+  } catch (error) {
+    console.error("Error obteniendo estadísticas del dashboard:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error interno del servidor"
     });
   }
 };

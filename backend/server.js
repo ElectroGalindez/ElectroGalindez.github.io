@@ -3,7 +3,7 @@ require('dotenv').config({ path: '.env' });
 const morgan = require('morgan');
 const cors = require('cors');
 
-require('./config/db'); 
+const connectDB = require('./config/db'); 
 
 const app = express();
 app.use(cors());
@@ -32,4 +32,16 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`Servidor corriendo en http://localhost:${PORT}/api`));
+
+// Conectar a MongoDB y luego iniciar el servidor
+const startServer = async () => {
+  try {
+    await connectDB();
+    app.listen(PORT, () => console.log(`Servidor corriendo en http://localhost:${PORT}/api`));
+  } catch (error) {
+    console.error('Error al iniciar el servidor:', error);
+    process.exit(1);
+  }
+};
+
+startServer();
