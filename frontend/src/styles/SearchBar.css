@@ -1,60 +1,61 @@
-/* Barra de búsqueda - Estilo Apple */
+/* SearchBar.css */
 .search-bar {
   position: relative;
+  display: flex;
+  align-items: center;
   width: 100%;
   max-width: 500px;
   margin: 0 auto;
+  transition: all 0.3s ease;
 }
 
-.search-bar input {
-  width: 100%;
-  padding: 12px 16px 12px 44px;
-  padding-right: 40px;
-  border: 1px solid rgba(0, 0, 0, 0.15);
-  border-radius: 14px;
-  font-size: 15px;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: rgba(255, 255, 255, 0.7);
-  color: #1d1d1f;
-  outline: none;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.search-bar input::placeholder {
-  color: #86868b;
-  font-weight: 400;
-}
-
-.search-bar input:focus {
-  border-color: #0077cc;
-  box-shadow: 0 0 0 2px rgba(0, 119, 204, 0.2);
-  background: white;
-  transform: translateY(-1px);
+.search-bar.active {
+  transform: scale(1.02);
 }
 
 /* Icono de búsqueda */
 .search-icon {
   position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #86868b;
+  left: 16px;
+  color: var(--text-light);
   pointer-events: none;
-  transition: color 0.3s ease;
+  transition: color 0.2s ease;
+  z-index: 1;
+}
+
+/* Input */
+.search-bar input {
+  width: 100%;
+  padding: 12px 44px 12px 48px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  outline: none;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 1rem;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.search-bar input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+  background: var(--bg);
+}
+
+.search-bar input::placeholder {
+  color: var(--text-light);
+  opacity: 0.7;
 }
 
 /* Botón de limpiar */
 .clear-button {
   position: absolute;
   right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
+  background: transparent;
   border: none;
-  color: #86868b;
+  color: var(--text-light);
   cursor: pointer;
   width: 20px;
   height: 20px;
@@ -62,67 +63,40 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .clear-button:hover {
-  background: rgba(0, 0, 0, 0.1);
-  color: #505054;
-  transform: translateY(-50%) scale(1.1);
+  background: rgba(0, 0, 0, 0.05);
+  color: #dc3545;
+  transform: scale(1.1);
+}
+
+[data-theme='dark'] .clear-button:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 /* Estado activo (focus) */
 .search-bar.active input {
-  border-color: #0077cc;
+  border-color: var(--primary);
 }
 
 /* Responsive */
-@media (max-width: 480px) {
+@media (max-width: 600px) {
+  .search-bar {
+    max-width: 100%;
+  }
+
   .search-bar input {
-    font-size: 14px;
-    padding: 10px 14px 10px 40px;
-    padding-right: 36px;
+    padding: 11px 40px 11px 44px;
+    font-size: 0.95rem;
   }
 
   .search-icon {
-    left: 12px;
+    left: 14px;
   }
 
   .clear-button {
     right: 10px;
-    width: 18px;
-    height: 18px;
-  }
-}
-
-/* Modo oscuro (automático) */
-@media (prefers-color-scheme: dark) {
-  .search-bar input {
-    background: rgba(30, 30, 30, 0.7);
-    color: #f5f5f7;
-    border-color: rgba(255, 255, 255, 0.15);
-  }
-
-  .search-bar input::placeholder {
-    color: #86868b;
-  }
-
-  .search-bar input:focus {
-    border-color: #0a84ff;
-    box-shadow: 0 0 0 2px rgba(10, 132, 255, 0.2);
-    background: #2c2c2e;
-  }
-
-  .search-icon {
-    color: #86868b;
-  }
-
-  .clear-button {
-    color: #86868b;
-  }
-
-  .clear-button:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #f5f5f7;
   }
 }

@@ -1,3 +1,4 @@
+// src/App.jsx
 import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { AdminProvider } from "./context/AdminContext";
@@ -14,6 +15,14 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 
+// ✅ Importa las nuevas páginas
+import About from "./pages/About";
+import Help from "./pages/Help";
+import Contact from "./pages/Contact";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
+
+// Páginas de Admin
 import DashboardHome from "./pages/admin/DashboardHome";
 import ProductAdmin from "./pages/admin/ProductAdmin";
 import CategoryAdmin from "./pages/admin/CategoryAdmin";
@@ -39,6 +48,13 @@ function App() {
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
           <Route path="profile" element={<Profile />} />
+          
+          {/* ✅ Rutas corregidas (sin / al inicio) */}
+          <Route path="about" element={<About />} />
+          <Route path="help" element={<Help />} />
+          <Route path="contact" element={<Contact />} />
+          <Route path="terms" element={<Terms />} />
+          <Route path="privacy" element={<Privacy />} />
         </Route>
 
         {/* 🔒 RUTAS ADMIN */}
@@ -52,7 +68,6 @@ function App() {
             </ProtectedRoute>
           }
         >
-          {/* Redirección automática a dashboard */}
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<DashboardHome />} />
           <Route path="products" element={<ProductAdmin />} />

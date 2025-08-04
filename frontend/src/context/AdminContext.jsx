@@ -1,9 +1,17 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+// src/context/AdminContext.jsx
+import { createContext, useContext, useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { useAuth } from "./AuthContext";
 
-export const AdminContext = createContext();
-export const useAdmin = () => useContext(AdminContext);
+const AdminContext = createContext();
+
+export const useAdmin = () => {
+  const context = useContext(AdminContext);
+  if (!context) {
+    throw new Error("useAdmin debe usarse dentro de un AdminProvider");
+  }
+  return context;
+};
 
 export const AdminProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
@@ -11,18 +19,20 @@ export const AdminProvider = ({ children }) => {
   const [orders, setOrders] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
-  const { getToken } = useAuth();
 
+  const { getToken } = useAuth();
   const API_BASE = "http://localhost:3001/api";
 
-  // Función genérica para peticiones autenticadas
+  // === Función genérica para peticiones autenticadas ===
   const fetchWithAuth = async (endpoint, method = "GET", body = null) => {
     setLoading(true);
     try {
       const token = getToken();
+      if (!token) throw new Error("No autorizado. Inicia sesión nuevamente.");
+
       const headers = {
         "Content-Type": "application/json",
-        ...(token && { Authorization: `Bearer ${token}` }),
+        "Authorization": `Bearer ${token}`,
       };
 
       const options = {
@@ -35,23 +45,28 @@ export const AdminProvider = ({ children }) => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || `Error ${response.status}`);
+        const errorMsg = data.error || data.message || `Error ${response.status}`;
+        throw new Error(errorMsg);
       }
 
-      return data; // Devuelve los datos tal cual
+      return data;
     } catch (error) {
-      toast.error(error.message);
+      const message = error.message.includes("Failed to fetch")
+        ? "No se pudo conectar al servidor. Verifica tu conexión o que el backend esté corriendo en http://localhost:3001"
+        : error.message;
+
+      toast.error(message);
       throw error;
     } finally {
       setLoading(false);
     }
   };
 
-  // Cargar productos: acepta { products: [...] } o [...]
+  // === Cargar productos ===
   const loadProducts = async () => {
     try {
       const data = await fetchWithAuth("/products");
-      const productsArray = Array.isArray(data) ? data : (data.products || []);
+      const productsArray = Array.isArray(data) ? data : data.products || [];
       setProducts(productsArray);
     } catch (error) {
       console.error("Error al cargar productos:", error);
@@ -59,11 +74,11 @@ export const AdminProvider = ({ children }) => {
     }
   };
 
-  // Cargar categorías: acepta { categories: [...] } o [...]
+  // === Cargar categorías ===
   const loadCategories = async () => {
     try {
       const data = await fetchWithAuth("/categories");
-      const categoriesArray = Array.isArray(data) ? data : (data.categories || []);
+      const categoriesArray = Array.isArray(data) ? data : data.categories || [];
       setCategories(categoriesArray);
     } catch (error) {
       console.error("Error al cargar categorías:", error);
@@ -71,19 +86,54 @@ export const AdminProvider = ({ children }) => {
     }
   };
 
-  useEffect(() => {
-    loadProducts();
-    loadCategories();
-  }, []);
+  // === Cargar órdenes (con items completos) ===
+  const loadOrders = async () => {
+    try {
+      const data = await fetchWithAuth("/orders");
+      const ordersArray = Array.isArray(data) ? data : data.orders || [];
 
-  // CRUD de productos
+      const ordersWithItems = await Promise.all(
+        ordersArray.map(async (order) => {
+          if (!order.items) {
+            try {
+              const detail = await fetchWithAuth(`/orders/${order._id || order.id}`);
+              return { ...order, items: detail.items || [] };
+            } catch (err) {
+              console.warn(`No se pudieron cargar los items de la orden ${order._id || order.id}`);
+              return { ...order, items: [] };
+            }
+          }
+          return order;
+        })
+      );
+
+      setOrders(ordersWithItems);
+    } catch (err) {
+      console.error("Error al cargar órdenes:", err);
+      setOrders([]);
+    }
+  };
+
+  // === Cargar usuarios ===
+  const loadUsers = async () => {
+    try {
+      const data = await fetchWithAuth("/users");
+      const usersArray = Array.isArray(data) ? data : data.users || [];
+      setUsers(usersArray);
+    } catch (error) {
+      console.error("Error al cargar usuarios:", error);
+      setUsers([]);
+    }
+  };
+
+  // === CRUD: Productos ===
   const createProduct = async (productData) => {
     try {
-      const data = await fetchWithAuth("/products", "POST", productData);
-      const newProduct = data.product || data; 
-      setProducts(prev => [...prev, newProduct]);
+      const newProduct = await fetchWithAuth("/products", "POST", productData);
+      const product = newProduct.product || newProduct;
+      setProducts(prev => [...prev, product]);
       toast.success("✅ Producto creado");
-      return newProduct;
+      return product;
     } catch (error) {
       throw error;
     }
@@ -91,11 +141,11 @@ export const AdminProvider = ({ children }) => {
 
   const updateProduct = async (id, productData) => {
     try {
-      const data = await fetchWithAuth(`/products/${id}`, "PUT", productData);
-      const updatedProduct = data.product || data;
-      setProducts(prev => prev.map(p => (p.id === id ? updatedProduct : p)));
+      const updated = await fetchWithAuth(`/products/${id}`, "PUT", productData);
+      const product = updated.product || updated;
+      setProducts(prev => prev.map(p => (p._id === id || p.id === id ? product : p)));
       toast.info("✏️ Producto actualizado");
-      return updatedProduct;
+      return product;
     } catch (error) {
       throw error;
     }
@@ -104,20 +154,21 @@ export const AdminProvider = ({ children }) => {
   const deleteProduct = async (id) => {
     try {
       await fetchWithAuth(`/products/${id}`, "DELETE");
-      setProducts(prev => prev.filter(p => p.id !== id));
+      setProducts(prev => prev.filter(p => p._id === id || p.id !== id));
       toast.success("🗑️ Producto eliminado");
     } catch (error) {
       throw error;
     }
   };
 
-  // CRUD de categorías
+  // === CRUD: Categorías ===
   const createCategory = async (name) => {
     try {
       const newCategory = await fetchWithAuth("/categories", "POST", { name });
-      setCategories(prev => [...prev, newCategory]);
+      const category = newCategory.category || newCategory;
+      setCategories(prev => [...prev, category]);
       toast.success("✅ Categoría creada");
-      return newCategory;
+      return category;
     } catch (error) {
       throw error;
     }
@@ -126,111 +177,85 @@ export const AdminProvider = ({ children }) => {
   const updateCategory = async (id, name) => {
     try {
       const updated = await fetchWithAuth(`/categories/${id}`, "PUT", { name });
-      setCategories(prev => prev.map(c => (c.id === id ? updated : c)));
+      const category = updated.category || updated;
+      setCategories(prev => prev.map(c => (c._id === id || c.id === id ? category : c)));
       toast.info("✏️ Categoría actualizada");
-      return updated;
+      return category;
     } catch (error) {
       throw error;
     }
   };
-  
+
   const deleteCategory = async (id) => {
     try {
       await fetchWithAuth(`/categories/${id}`, "DELETE");
-      setCategories(prev => prev.filter(c => c.id !== id));
+      setCategories(prev => prev.filter(c => c._id === id || c.id !== id));
       toast.success("🗑️ Categoría eliminada");
     } catch (error) {
       throw error;
     }
   };
 
-  // CRUD de órdenes
-const loadOrders = async () => {
-  try {
-    const data = await fetchWithAuth("/orders");
-    const ordersArray = Array.isArray(data) ? data : (data.orders || []);
-    
-    // Asegurar que cada orden tenga `items`
-    const ordersWithItems = await Promise.all(
-      ordersArray.map(async (order) => {
-        if (!order.items) {
-          try {
-            const detail = await fetchWithAuth(`/orders/${order.id}`);
-            return { ...order, items: detail.items };
-          } catch (err) {
-            console.warn(`No se pudo cargar items para orden ${order.id}`);
-            return { ...order, items: [] };
-          }
-        }
-        return order;
-      })
-    );
-
-    setOrders(ordersWithItems);
-  } catch (err) {
-    console.error("Error al cargar órdenes:", err);
-    setOrders([]);
-  }
-};
-const loadUsers = async () => {
+  // === CRUD: Órdenes ===
+  const updateOrderStatus = async (id, status) => {
     try {
-      const data = await fetchWithAuth("/users");
-      const usersArray = Array.isArray(data) ? data : (data.users || []);
-      setUsers(usersArray);
-    } catch (error) {
-      console.error("Error al cargar usuarios:", error);
-      setUsers([]);
+      const updated = await fetchWithAuth(`/orders/${id}/status`, "PUT", { status });
+      const order = updated.order || updated;
+      setOrders(prev => prev.map(o => (o._id === id || o.id === id ? order : o)));
+      toast.info(`✅ Orden #${id} actualizada a "${status}"`);
+      return order;
+    } catch (err) {
+      throw err;
     }
-};
-const updateOrderStatus = async (id, status) => {
-  try {
-    const updated = await fetchWithAuth(`/orders/${id}/status`, "PUT", { status });
-    setOrders(prev => prev.map(o => (o.id === id ? updated : o)));
-    toast.info(`✅ Orden #${id} actualizada a "${status}"`);
-    return updated;
-  } catch (err) {
-    throw err;
-  }
-};
+  };
 
-const deleteOrder = async (id) => {
-  try {
-    await fetchWithAuth(`/orders/${id}`, "DELETE");
-    setOrders(prev => prev.filter(o => o.id !== id));
-    toast.success(`🗑️ Orden #${id} eliminada`);
-  } catch (err) {
-    toast.error(`Error al eliminar orden #${id}`);
-    throw err;
-  }
-};
-  
+  const deleteOrder = async (id) => {
+    try {
+      await fetchWithAuth(`/orders/${id}`, "DELETE");
+      setOrders(prev => prev.filter(o => o._id === id || o.id !== id));
+      toast.success(`🗑️ Orden #${id} eliminada`);
+    } catch (err) {
+      toast.error(`Error al eliminar orden #${id}`);
+      throw err;
+    }
+  };
+
+  // === Carga inicial ===
+  useEffect(() => {
+    loadProducts();
+    loadCategories();
+  }, []);
+
+  // === Valor del contexto ===
+  const value = {
+    // Datos
+    products,
+    categories,
+    orders,
+    users,
+    loading,
+
+    // Cargadores
+    loadOrders,
+    loadUsers,
+
+    // Productos
+    createProduct,
+    updateProduct,
+    deleteProduct,
+
+    // Categorías
+    createCategory,
+    updateCategory,
+    deleteCategory,
+
+    // Órdenes
+    updateOrderStatus,
+    deleteOrder,
+  };
+
   return (
-    <AdminContext.Provider
-      value={{
-        // Datos
-        products,
-        categories,
-        orders,
-        users,
-        loading,
-
-        // Productos
-        createProduct,
-        updateProduct,
-        deleteProduct,
-
-        // Categorías
-        createCategory,
-        updateCategory,
-        deleteCategory,
-
-        // Órdenes y usuarios
-        loadOrders,
-        loadUsers,
-        updateOrderStatus,
-        deleteOrder,
-      }}
-    >
+    <AdminContext.Provider value={value}>
       {children}
     </AdminContext.Provider>
   );
