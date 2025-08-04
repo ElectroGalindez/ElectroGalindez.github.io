@@ -1,3 +1,4 @@
+// src/components/CategoryAdmin.jsx
 import React, { useState, useEffect } from "react";
 import { useAdmin } from "../../context/AdminContext";
 import "../../styles/CategoryAdmin.css";
@@ -8,13 +9,11 @@ export default function CategoryAdmin() {
   const [editingId, setEditingId] = useState(null);
   const [error, setError] = useState("");
 
-  // Limpiar error al cambiar el input
   const handleNameChange = (e) => {
     setName(e.target.value);
     if (error) setError("");
   };
 
-  // Enviar formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -29,7 +28,6 @@ export default function CategoryAdmin() {
       } else {
         await createCategory(name);
       }
-      // Resetear estado
       setName("");
       setEditingId(null);
       setError("");
@@ -39,21 +37,18 @@ export default function CategoryAdmin() {
     }
   };
 
-  // Editar categoría
   const startEditing = (category) => {
     setName(category.name);
     setEditingId(category.id);
     setError("");
   };
 
-  // Cancelar edición
   const cancelEditing = () => {
     setName("");
     setEditingId(null);
     setError("");
   };
 
-  // Eliminar con confirmación
   const handleDelete = async (id, categoryName) => {
     if (!window.confirm(`¿Eliminar la categoría "${categoryName}"? Esta acción no se puede deshacer.`)) {
       return;
@@ -67,21 +62,20 @@ export default function CategoryAdmin() {
     }
   };
 
-  // Mostrar mensaje si no hay categorías
   const showEmpty = !loading && Array.isArray(categories) && categories.length === 0;
 
   return (
     <div className="category-admin">
-      <h1 className="dashboard-title">Gestión de Categorías</h1>
-      <p className="dashboard-description">
-        Crea, edita o elimina categorías para organizar tus productos.
-      </p>
+      <header className="category-header">
+        <h1>Gestión de Categorías</h1>
+        <p>Crea, edita o elimina categorías para organizar tus productos.</p>
+      </header>
 
       {/* Formulario */}
-      <div className="form-section">
-        <h2 className="form-title">{editingId ? 'Editar Categoría' : 'Nueva Categoría'}</h2>
+      <section className="form-section">
+        <h2>{editingId ? 'Editar Categoría' : 'Nueva Categoría'}</h2>
 
-        {error && <p className="form-error">{error}</p>}
+        {error && <div className="alert error">{error}</div>}
 
         <form onSubmit={handleSubmit} className="category-form">
           <input
@@ -96,16 +90,16 @@ export default function CategoryAdmin() {
           <div className="form-actions">
             <button
               type="submit"
-              className="btn btn-primary"
+              className="btn primary"
               disabled={loading || !name.trim()}
             >
-              {loading && editingId === null ? "Creando..." : editingId ? "Actualizar" : "Crear"}
+              {loading && !editingId ? "Creando..." : editingId ? "Actualizar" : "Crear"}
             </button>
 
             {editingId && (
               <button
                 type="button"
-                className="btn btn-secondary"
+                className="btn secondary"
                 onClick={cancelEditing}
                 disabled={loading}
               >
@@ -114,52 +108,57 @@ export default function CategoryAdmin() {
             )}
           </div>
         </form>
-      </div>
+      </section>
 
-      {/* Lista de categorías */}
-      <div className="table-section">
-        <h3 className="section-title">Categorías Existentes</h3>
+      {/* Lista */}
+      <section className="table-section">
+        <h3>Categorías Existentes</h3>
 
         {loading ? (
-          <div className="dashboard-loading">
+          <div className="loading-state">
             <div className="spinner"></div>
             <p>Cargando categorías...</p>
           </div>
         ) : showEmpty ? (
-          <p className="text-center">No hay categorías disponibles. Crea una nueva.</p>
+          <div className="empty-state">
+            <p>No hay categorías disponibles. Crea una nueva.</p>
+          </div>
         ) : !Array.isArray(categories) ? (
-          <p className="text-center">Error al cargar las categorías.</p>
+          <div className="error-state">
+            <p>Error al cargar las categorías.</p>
+          </div>
         ) : (
           <div className="category-list">
             {categories.map((c) => (
-              <div key={c.id} className="category-item">
-                {editingId === c.id ? (
-                  <form onSubmit={handleSubmit} className="inline-form">
+              <div key={c.id} className={`category-item ${editingId === c.id ? 'editing' : ''}`}>
+                <div className="category-info">
+                  {editingId === c.id ? (
                     <input
                       type="text"
                       value={name}
                       onChange={handleNameChange}
                       disabled={loading}
                       placeholder="Nombre de categoría"
+                      autoFocus
                     />
-                  </form>
-                ) : (
-                  <span className="category-name">{c.name}</span>
-                )}
+                  ) : (
+                    <span className="category-name">{c.name}</span>
+                  )}
+                </div>
 
                 <div className="category-actions">
                   {editingId === c.id ? (
                     <>
                       <button
                         onClick={handleSubmit}
-                        className="action-button save"
+                        className="btn action save"
                         disabled={loading || !name.trim()}
                       >
                         {loading ? "Guardando..." : "Guardar"}
                       </button>
                       <button
                         onClick={cancelEditing}
-                        className="action-button cancel"
+                        className="btn action cancel"
                         disabled={loading}
                       >
                         Cancelar
@@ -169,14 +168,14 @@ export default function CategoryAdmin() {
                     <>
                       <button
                         onClick={() => startEditing(c)}
-                        className="action-button edit"
+                        className="btn edit"
                         disabled={loading}
                       >
                         Editar
                       </button>
                       <button
                         onClick={() => handleDelete(c.id, c.name)}
-                        className="action-button delete"
+                        className="btn delete"
                         disabled={loading}
                       >
                         Eliminar
@@ -188,7 +187,7 @@ export default function CategoryAdmin() {
             ))}
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }

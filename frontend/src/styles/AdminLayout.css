@@ -1,26 +1,54 @@
+/* Layout del Panel Admin */
 .admin-layout {
   display: flex;
   min-height: 100vh;
+  background: #f5f5f7;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  overflow: hidden;
 }
 
 .admin-content {
   flex: 1;
-  padding: 20px;
+  padding: 30px 20px;
   margin-left: 0;
   transition: margin-left 0.3s ease;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-@media (min-width: 769px) {
-  .admin-sidebar {
-    transform: translateX(0);
-  }
-  
+/* Ajuste cuando el sidebar está abierto (móvil) */
+@media (max-width: 1023px) {
   .admin-content {
-    margin-left: 250px;
+    margin-left: 0;
   }
-  
-  .sidebar-toggle, 
-  .sidebar-overlay {
-    display: none !important;
+
+  .admin-layout .admin-sidebar.open + .admin-content {
+    margin-left: 0;
+  }
+}
+
+/* En pantallas grandes, el sidebar es fijo y el contenido se ajusta */
+@media (min-width: 1024px) {
+  .admin-content {
+    margin-left: 280px; /* Mismo ancho que el sidebar */
+  }
+}
+
+/* Responsive para pantallas pequeñas */
+@media (max-width: 480px) {
+  .admin-content {
+    padding: 20px 16px;
+  }
+}
+
+/* Modo oscuro (automático) */
+@media (prefers-color-scheme: dark) {
+  .admin-layout {
+    background: #1c1c1e;
+  }
+
+  .admin-content {
+    color: #f5f5f7;
   }
 }

@@ -1,6 +1,9 @@
+// src/components/AdminSidebar.jsx
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { FaBars, FaTimes, FaBox, FaUsers, FaThLarge, FaClipboardList, FaHome, FaTachometerAlt, FaList } from "react-icons/fa";
+import { 
+  FaBars, FaTimes, FaBox, FaUsers, FaThLarge, FaClipboardList, FaHome, FaTachometerAlt, FaList 
+} from "react-icons/fa";
 import "../styles/AdminSidebar.css";
 
 export default function AdminSidebar() {
@@ -10,13 +13,17 @@ export default function AdminSidebar() {
   const toggleSidebar = () => setOpen(!open);
   const closeSidebar = () => setOpen(false);
   
-  // Verificar si estamos en la ruta base del admin
-  const isBaseRoute = location.pathname === '/admin' || location.pathname === '/admin/';
+  // Verificar si estamos en el dashboard (ruta base)
+  const isDashboard = location.pathname === '/admin' || location.pathname === '/admin/dashboard';
 
   return (
     <>
       {/* Botón hamburguesa */}
-      <button className="sidebar-toggle" onClick={toggleSidebar}>
+      <button 
+        className="sidebar-toggle" 
+        onClick={toggleSidebar}
+        aria-label={open ? "Cerrar menú" : "Abrir menú"}
+      >
         {open ? <FaTimes /> : <FaBars />}
       </button>
 
@@ -29,8 +36,11 @@ export default function AdminSidebar() {
         <nav className="sidebar-nav">
           <NavLink 
             to="/admin/dashboard" 
-            className={isBaseRoute ? "active" : ""}
+            className={({ isActive }) => 
+              `nav-link ${isActive || isDashboard ? "active" : ""}`
+            }
             onClick={closeSidebar}
+            end
           >
             <FaTachometerAlt className="icon" />
             <span>Dashboard</span>
@@ -38,6 +48,7 @@ export default function AdminSidebar() {
           
           <NavLink 
             to="/admin/products" 
+            className="nav-link"
             onClick={closeSidebar}
           >
             <FaBox className="icon" />
@@ -46,6 +57,7 @@ export default function AdminSidebar() {
           
           <NavLink 
             to="/admin/categories" 
+            className="nav-link"
             onClick={closeSidebar}
           >
             <FaList className="icon" />
@@ -54,6 +66,7 @@ export default function AdminSidebar() {
           
           <NavLink 
             to="/admin/orders" 
+            className="nav-link"
             onClick={closeSidebar}
           >
             <FaClipboardList className="icon" />
@@ -62,6 +75,7 @@ export default function AdminSidebar() {
           
           <NavLink 
             to="/admin/users" 
+            className="nav-link"
             onClick={closeSidebar}
           >
             <FaUsers className="icon" />
@@ -71,7 +85,8 @@ export default function AdminSidebar() {
           <NavLink 
             to="/" 
             onClick={closeSidebar}
-            className="go-to-site"
+            className="nav-link go-to-site"
+            aria-label="Ir al sitio principal"
           >
             <FaHome className="icon" />
             <span>Ir al sitio</span>
@@ -79,7 +94,7 @@ export default function AdminSidebar() {
         </nav>
         
         <div className="sidebar-footer">
-          <p>ElectroShop Admin</p>
+          <p>ElectroGalíndez Admin</p>
         </div>
       </aside>
       

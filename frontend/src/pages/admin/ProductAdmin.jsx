@@ -1,3 +1,4 @@
+// src/components/ProductAdmin.jsx
 import React, { useState, useMemo } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import { useStore } from '../../context/StoreContext';
@@ -7,11 +8,8 @@ import '../../styles/ProductAdmin.css';
 const ProductAdmin = () => {
   const { products, deleteProduct, createProduct, updateProduct, loading } = useAdmin();
   const { categories } = useStore();
-
   const [search, setSearch] = useState('');
   const [error, setError] = useState(null);
-
-  // Formulario
   const [formData, setFormData] = useState({
     name: '',
     price: '',
@@ -20,57 +18,44 @@ const ProductAdmin = () => {
     category_id: '',
     id: null,
   });
-
   const [isEditing, setIsEditing] = useState(false);
   const [formError, setFormError] = useState('');
 
-  // Asegurar productos
   const safeProducts = Array.isArray(products) ? products : [];
 
-  // Filtrar productos
   const filteredProducts = useMemo(() => {
     if (!search.trim()) return safeProducts;
-
     return safeProducts.filter(p => {
       if (!p) return false;
-
       const nameMatch = p.name?.toLowerCase().includes(search.toLowerCase()) || false;
       const categoryMatch = p.category_id?.toString().includes(search) || false;
       const descMatch = p.description?.toLowerCase().includes(search.toLowerCase()) || false;
-
       return nameMatch || categoryMatch || descMatch;
     });
   }, [safeProducts, search]);
 
-  // Cambiar input
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Validar formulario
   const validateForm = () => {
     const required = ['name', 'price', 'category_id'];
     const newErrors = {};
-
     required.forEach(field => {
       if (!formData[field]) newErrors[field] = 'Requerido';
     });
-
     if (isNaN(formData.price) || parseFloat(formData.price) <= 0) {
       newErrors.price = 'Precio inválido';
     }
-
     setFormError('');
     if (Object.keys(newErrors).length > 0) {
-      setFormError('Corrige los errores');
+      setFormError('Corrige los errores en el formulario.');
       return false;
     }
-
     return true;
   };
 
-  // Enviar formulario
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -98,7 +83,6 @@ const ProductAdmin = () => {
     setIsEditing(false);
   };
 
-  // Editar producto
   const handleEdit = (product) => {
     setFormData({
       id: product.id,
@@ -112,28 +96,26 @@ const ProductAdmin = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Eliminar producto
   const handleDelete = async (id) => {
-    if (!window.confirm('¿Eliminar este producto?')) return;
+    if (!window.confirm('¿Eliminar este producto? Esta acción no se puede deshacer.')) return;
     try {
       await deleteProduct(id);
       setError(null);
     } catch (err) {
-      setError('Error al eliminar el producto');
+      setError('Error al eliminar el producto.');
       console.error('Delete error:', err);
     }
   };
 
-  // Formatear precio
   const formatPrice = (price) =>
     new Intl.NumberFormat('es-ES', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'EUR',
     }).format(price || 0);
 
   if (loading) {
     return (
-      <div className="dashboard-loading">
+      <div className="product-admin loading">
         <div className="spinner"></div>
         <p>Cargando productos...</p>
       </div>
@@ -142,50 +124,54 @@ const ProductAdmin = () => {
 
   return (
     <div className="product-admin">
-      <h1 className="dashboard-title">Gestión de Productos</h1>
-      <p className="dashboard-description">
-        Administra los productos de tu tienda, agrega nuevos, edita o elimina los existentes.
-      </p>
+      <header className="product-header">
+        <h1>Gestión de Productos</h1>
+        <p>Administra los productos de tu tienda: agrega, edita o elimina.</p>
+      </header>
 
       {/* Formulario */}
-      <div className="form-section">
-        <h2 className="form-title">{isEditing ? 'Editar Producto' : 'Nuevo Producto'}</h2>
-
-        {formError && <p className="form-error">{formError}</p>}
+      <section className="form-section">
+        <h2>{isEditing ? 'Editar Producto' : 'Nuevo Producto'}</h2>
+        {formError && <div className="alert error">{formError}</div>}
 
         <form onSubmit={handleSubmit} className="product-form">
-          <div className="form-row">
+          <div className="form-grid">
             <div className="form-group">
-              <label>Nombre</label>
+              <label htmlFor="name">Nombre</label>
               <input
                 type="text"
+                id="name"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
                 placeholder="Nombre del producto"
+                required
               />
             </div>
+
             <div className="form-group">
-              <label>Precio</label>
+              <label htmlFor="price">Precio (€)</label>
               <input
                 type="number"
+                id="price"
                 name="price"
                 value={formData.price}
                 onChange={handleChange}
                 placeholder="0.00"
                 step="0.01"
                 min="0"
+                required
               />
             </div>
-          </div>
 
-          <div className="form-row">
             <div className="form-group">
-              <label>Categoría</label>
+              <label htmlFor="category_id">Categoría</label>
               <select
+                id="category_id"
                 name="category_id"
                 value={formData.category_id}
                 onChange={handleChange}
+                required
               >
                 <option value="">Seleccionar categoría</option>
                 {categories.map(cat => (
@@ -195,39 +181,40 @@ const ProductAdmin = () => {
                 ))}
               </select>
             </div>
+
             <div className="form-group">
-              <label>Imagen (URL)</label>
+              <label htmlFor="image_url">Imagen (URL)</label>
               <input
                 type="url"
+                id="image_url"
                 name="image_url"
                 value={formData.image_url}
                 onChange={handleChange}
-                placeholder="https://ejemplo.com/imagen.jpg "
+                placeholder="https://ejemplo.com/imagen.jpg"
               />
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group full">
-              <label>Descripción</label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                rows="3"
-                placeholder="Escribe una descripción..."
-              />
-            </div>
+          <div className="form-group full">
+            <label htmlFor="description">Descripción</label>
+            <textarea
+              id="description"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              rows="3"
+              placeholder="Escribe una descripción detallada..."
+            />
           </div>
 
           <div className="form-actions">
-            <button type="submit" className="btn btn-primary">
+            <button type="submit" className="btn primary">
               {isEditing ? 'Actualizar Producto' : 'Agregar Producto'}
             </button>
             {isEditing && (
               <button
                 type="button"
-                className="btn btn-secondary"
+                className="btn secondary"
                 onClick={() => {
                   setFormData({
                     name: '',
@@ -245,10 +232,10 @@ const ProductAdmin = () => {
             )}
           </div>
         </form>
-      </div>
+      </section>
 
-      {/* Tabla de productos */}
-      <div className="table-section">
+      {/* Lista de productos */}
+      <section className="table-section">
         <div className="table-header">
           <input
             type="text"
@@ -259,73 +246,59 @@ const ProductAdmin = () => {
           />
         </div>
 
-        {error && <div className="dashboard-error">⚠️ {error}</div>}
+        {error && <div className="alert error">{error}</div>}
 
-        <div className="table-wrapper">
-          <table className="product-table">
-            <thead>
-              <tr>
-                <th>Imagen</th>
-                <th>Nombre</th>
-                <th>Categoría</th>
-                <th>Precio</th>
-                <th>Descripción</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredProducts.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="text-center">
-                    {safeProducts.length === 0
-                      ? 'No hay productos disponibles'
-                      : 'No se encontraron productos con ese criterio'}
-                  </td>
-                </tr>
-              ) : (
-                filteredProducts.map((product) => {
-                  const category = categories?.find((c) => c.id === product.category_id);
-
-                  return (
-                    <tr key={product.id} className="product-row">
-                      <td className="product-image-cell">
-                        <img
-                          src={product.image_url || '/placeholder.png'}
-                          alt={product.name || 'Producto'}
-                          onError={(e) => {
-                            e.target.src = '/placeholder.png';
-                          }}
-                          className="product-thumbnail"
-                        />
-                      </td>
-                      <td>{product.name}</td>
-                      <td>{category ? category.name : 'Sin categoría'}</td>
-                      <td>{formatPrice(product.price)}</td>
-                      <td className="product-description">{product.description || 'Sin descripción'}</td>
-                      <td className="product-actions">
-                        <button
-                          onClick={() => handleEdit(product)}
-                          className="action-button edit"
-                          aria-label="Editar producto"
-                        >
-                          <FaEdit />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(product.id)}
-                          className="action-button delete"
-                          aria-label="Eliminar producto"
-                        >
-                          <FaTrash />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+        <div className="product-list">
+          {filteredProducts.length === 0 ? (
+            <div className="empty-state">
+              <p>
+                {safeProducts.length === 0
+                  ? 'No hay productos disponibles. Agrega uno nuevo.'
+                  : 'No se encontraron productos con ese criterio.'}
+              </p>
+            </div>
+          ) : (
+            filteredProducts.map((product) => {
+              const category = categories?.find((c) => c.id === product.category_id);
+              return (
+                <div key={product.id} className="product-card">
+                  <div className="product-image">
+                    <img
+                      src={product.image_url || '/placeholder.png'}
+                      alt={product.name || 'Producto'}
+                      onError={(e) => { e.target.src = '/placeholder.png'; }}
+                    />
+                  </div>
+                  <div className="product-info">
+                    <h3>{product.name}</h3>
+                    <p className="product-category">{category?.name || 'Sin categoría'}</p>
+                    <p className="product-price">{formatPrice(product.price)}</p>
+                    <p className="product-desc" title={product.description}>
+                      {product.description || 'Sin descripción'}
+                    </p>
+                  </div>
+                  <div className="product-actions">
+                    <button
+                      onClick={() => handleEdit(product)}
+                      className="action-btn edit"
+                      aria-label="Editar producto"
+                    >
+                      <FaEdit />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(product.id)}
+                      className="action-btn delete"
+                      aria-label="Eliminar producto"
+                    >
+                      <FaTrash />
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
-      </div>
+      </section>
     </div>
   );
 };

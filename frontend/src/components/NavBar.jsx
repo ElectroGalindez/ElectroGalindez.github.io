@@ -1,90 +1,107 @@
 // src/components/Navbar.jsx
-import { Link, useNavigate } from "react-router-dom";
-import { useCart } from "../context/CartContext";
-import { useAuth } from "../context/AuthContext"; // Usamos el AuthContext
-import { FaUserCircle, FaUserShield } from "react-icons/fa";
-import { useEffect, useRef, useState } from "react";
-import "../styles/Navbar.css";
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import { 
+  FaUserCircle, 
+  FaUserShield, 
+  FaSearch, 
+  FaShoppingCart, 
+  FaLanguage, 
+  FaDollarSign, 
+  FaPhoneAlt 
+} from 'react-icons/fa';
+import SearchBar from './SearchBar';
+import '../styles/Navbar.css';
 
 function Navbar() {
   const { cart } = useCart();
-  const { user, logout } = useAuth(); // Obtenemos el usuario y logout del contexto
-  const navigate = useNavigate();
-  const [showMenu, setShowMenu] = useState(false);
-  const menuRef = useRef(null);
+  const { user } = useAuth();
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const [scrolled, setScrolled] = useState(false);
 
-  // Cerrar menú al hacer clic fuera
+  // Detectar scroll para efecto de opacidad
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setShowMenu(false);
-      }
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
-    logout(); 
-    navigate("/"); 
-  };
-
   return (
-    <header className="navbar">
-      <div className="navbar__title">
-        <Link to="/">ElectroGalíndez</Link>
+    <header className={`navbar ${scrolled ? 'scrolled' : ''}`}>
+      {/* Barra superior */}
+      <div className="navbar-top">
+        <div className="navbar-container">
+          {/* Logo */}
+          <div className="navbar-brand">
+            <Link to="/" aria-label="Inicio">
+              <img 
+                src="../assets/logo.jpeg" 
+                alt="ElectroGalíndez" 
+                className="logo-image" 
+              />
+            </Link>
+          </div>
+
+          {/* Búsqueda */}
+          <div className="search-wrapper">
+            <div className="search-wrapper">
+              <SearchBar onSearch={(query) => setSearch(query)} />
+            </div>
+          </div>
+
+          {/* Acciones */}
+          <div className="navbar-actions">
+            <Link to={user ? '/profile' : '/login'} className="navbar-link auth" aria-label={user ? 'Perfil' : 'Iniciar sesión'}>
+              {user ? <FaUserShield size={20} /> : <FaUserCircle size={20} />}
+              <span>{user ? 'Perfil' : 'Iniciar sesión'}</span>
+            </Link>
+            <Link to="/cart" className="navbar-link cart" aria-label="Carrito de compras">
+              <FaShoppingCart size={20} />
+              {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
+            </Link>
+          </div>
+        </div>
       </div>
 
-      <nav className="navbar__links">
-        <Link to="/">Inicio</Link>
-        <Link to="/products">Productos</Link>
-        <Link to="/cart" className="cart-link">
-          <div className="cart-wrapper">
-            Carrito
-            {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
+      {/* Menú principal */}
+      <nav className="navbar-main">
+        <div className="navbar-container">
+          <ul className="navbar-menu" role="menubar">
+            {[
+              { to: '/', label: 'Todos los productos' },
+              { to: '/products', label: 'Novedades' },
+              { to: '/offers', label: 'Ofertas' },
+              { to: '/help', label: 'Ayuda' },
+              { to: '/about', label: 'Sobre nosotros' },
+              { to: '/contact', label: 'Contacto' },
+            ].map((item) => (
+              <li key={item.to} role="none">
+                <Link to={item.to} className="menu-link" role="menuitem">
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+
+          <div className="navbar-tools">
+            <select className="language-selector" aria-label="Seleccionar idioma">
+              <option value="es">ES</option>
+              <option value="en">EN</option>
+            </select>
+            <select className="currency-selector" aria-label="Seleccionar moneda">
+              <option value="EUR">€ EUR</option>
+              <option value="USD">$ USD</option>
+            </select>
+            <div className="contact-info" aria-label="Teléfono de contacto">
+              <FaPhoneAlt aria-hidden="true" />
+              <span>+53 58956749</span>
+            </div>
           </div>
-        </Link>
-
-        {!user ? (
-          <>
-            <Link to="/login">Entrar</Link>
-            <Link to="/register">Registrarse</Link>
-          </>
-        ) : (
-          <div className="navbar__user" ref={menuRef}>
-            <button className="user-btn" onClick={() => setShowMenu(!showMenu)}>
-              {user.role === "admin" ? (
-                <FaUserShield size={22} />
-              ) : (
-                <FaUserCircle size={22} />
-              )}
-            </button>
-
-            {showMenu && (
-              <div className="user-menu">
-                <p className="user-email">{user.email}</p>
-                <p className="user-role">{user.role === "admin" ? "Administrador" : "Cliente"}</p>
-                <hr />
-                <Link to="/profile" onClick={() => setShowMenu(false)}>Perfil</Link>
-
-                {/* Mostrar 'Mis Pedidos' solo si no es un admin */}
-                {user.role !== "admin" && (
-                  <Link to="/cart" onClick={() => setShowMenu(false)}>Mis Pedidos</Link>
-                )}
-
-                {/* Mostrar 'Panel Admin' solo si es un admin */}
-                {user.role === "admin" && (
-                  <Link to="/admin" onClick={() => setShowMenu(false)}>Panel Admin</Link>
-                )}
-
-                <button onClick={handleLogout}>Cerrar sesión</button>
-              </div>
-            )}
-          </div>
-        )}
+        </div>
       </nav>
     </header>
   );

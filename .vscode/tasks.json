@@ -1,0 +1,12 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "shell",
+			"label": "Iniciar backend",
+			"command": "npm install && npm run start",
+			"group": "build",
+			"isBackground": false
+		}
+	]
+}

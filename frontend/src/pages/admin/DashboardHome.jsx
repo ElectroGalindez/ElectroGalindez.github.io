@@ -1,3 +1,4 @@
+// src/components/DashboardHome.jsx
 import React, { useEffect, useState } from 'react';
 import { FaUsers, FaBoxOpen, FaReceipt, FaMoneyBillWave } from 'react-icons/fa';
 import {
@@ -66,7 +67,7 @@ function DashboardHome() {
 
   if (loading) {
     return (
-      <div className="dashboard-loading">
+      <div className="dashboard-home loading">
         <div className="spinner"></div>
         <p>Cargando datos del dashboard...</p>
       </div>
@@ -75,21 +76,26 @@ function DashboardHome() {
 
   if (error) {
     return (
-      <div className="dashboard-error">
+      <div className="dashboard-home error">
         <p>⚠️ Error al cargar el resumen: {error}</p>
+        <button onClick={() => window.location.reload()} className="btn-retry">
+          Reintentar
+        </button>
       </div>
     );
   }
 
   return (
     <div className="dashboard-home">
-      <h1 className="dashboard-title">Panel de Administración</h1>
-      <p className="dashboard-description">Resumen de actividad y rendimiento de la tienda</p>
+      <header className="dashboard-header">
+        <h1>Panel de Administración</h1>
+        <p>Resumen de actividad y rendimiento de la tienda</p>
+      </header>
 
-      <div className="dashboard-cards">
+      <section className="dashboard-cards">
         <div className="dashboard-card card-users">
           <div className="card-icon">
-            <FaUsers />
+            <FaUsers size={24} />
           </div>
           <div className="card-content">
             <h3>{summary.users}</h3>
@@ -99,7 +105,7 @@ function DashboardHome() {
 
         <div className="dashboard-card card-products">
           <div className="card-icon">
-            <FaBoxOpen />
+            <FaBoxOpen size={24} />
           </div>
           <div className="card-content">
             <h3>{summary.products}</h3>
@@ -109,7 +115,7 @@ function DashboardHome() {
 
         <div className="dashboard-card card-orders">
           <div className="card-icon">
-            <FaReceipt />
+            <FaReceipt size={24} />
           </div>
           <div className="card-content">
             <h3>{summary.pendingOrders} / {summary.completedOrders}</h3>
@@ -119,37 +125,46 @@ function DashboardHome() {
 
         <div className="dashboard-card card-income">
           <div className="card-icon">
-            <FaMoneyBillWave />
+            <FaMoneyBillWave size={24} />
           </div>
           <div className="card-content">
-            <h3>${summary.totalIncome.toFixed(2)}</h3>
+            <h3>€{summary.totalIncome.toFixed(2)}</h3>
             <p>Ingresos Totales</p>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className="dashboard-charts">
+      <section className="dashboard-charts">
         <div className="chart-container">
-          <h3 className="chart-title">Ventas de la Última Semana</h3>
+          <h3>Ventas de la Última Semana</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={salesByDay} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="day" />
-              <YAxis />
+              <CartesianGrid strokeDasharray="5 5" opacity={0.2} />
+              <XAxis dataKey="day" tick={{ fill: '#505054', fontSize: 13 }} />
+              <YAxis tick={{ fill: '#505054', fontSize: 13 }} />
               <Tooltip
+                contentStyle={{
+                  background: '#1d1d1f',
+                  border: 'none',
+                  borderRadius: '12px',
+                  color: 'white',
+                  fontSize: '14px',
+                }}
                 formatter={(value) => [`${value} ventas`, 'Ventas']}
                 labelFormatter={(label) => `Día: ${label}`}
               />
               <Bar
                 dataKey="ventas"
-                fill="#4361ee"
+                fill="#0077cc"
                 name="Ventas"
-                radius={[4, 4, 0, 0]}
+                radius={[6, 6, 0, 0]}
+                stroke="#005bb5"
+                strokeWidth={1}
               />
             </BarChart>
           </ResponsiveContainer>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

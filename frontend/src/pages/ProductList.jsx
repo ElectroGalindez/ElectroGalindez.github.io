@@ -1,12 +1,13 @@
+// src/components/ProductList.jsx
 import React, { useEffect, useState } from 'react';
 import CategoryFilter from '../components/CategoryFilter';
 import { Link } from 'react-router-dom';
-import { useCart } from '../context/CartContext';  
+import { useCart } from '../context/CartContext';
 import '../styles/ProductList.css';
 
 function ProductList() {
   const [products, setProducts] = useState([]);
-  const { addToCart } = useCart();  
+  const { addToCart } = useCart();
 
   const fetchProducts = async (categoryId = null) => {
     let url = 'http://localhost:3001/api/products';
@@ -27,33 +28,48 @@ function ProductList() {
 
   return (
     <div className="product-page">
-      <h2>Todos los Productos</h2>
+      {/* Encabezado */}
+      <header className="product-header">
+        <h2>Todos los Productos</h2>
+      </header>
 
-      {/* Botones arriba */}
+      {/* Filtro de categorías */}
       <div className="category-row">
         <CategoryFilter onSelectCategory={fetchProducts} />
       </div>
 
-      {/* Productos debajo */}
+      {/* Grid de productos */}
       <div className="products-grid">
-        {products.map((product) => (
-          <div key={product.id} className="product-card">
-            <img src={product.image_url} alt={product.name} />
-            <h3>{product.name}</h3>
-            <p>€{product.price}</p>
-            <div className="button-group">
-              <Link to={`/products/${product.id}`} className="btn">
-                Ver más
-              </Link>
-              <button
-                onClick={() => addToCart(product)} 
-                className="btn add-cart"
-              >
-                Agregar al carrito
-              </button>
+        {products.length === 0 ? (
+          <p className="no-products">No hay productos disponibles en esta categoría.</p>
+        ) : (
+          products.map((product) => (
+            <div key={product.id} className="product-card">
+              <div className="product-image-wrapper">
+                <img
+                  src={product.image_url}
+                  alt={product.name}
+                  loading="lazy"
+                  className="product-image"
+                />
+              </div>
+              <h3 className="product-name">{product.name}</h3>
+              <p className="product-price">€{product.price.toFixed(2)}</p>
+              <div className="button-group">
+                <Link to={`/products/${product.id}`} className="btn btn-outline">
+                  Ver detalle
+                </Link>
+                <button
+                  onClick={() => addToCart(product)}
+                  className="btn btn-primary"
+                  aria-label={`Agregar ${product.name} al carrito`}
+                >
+                  + Carrito
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );

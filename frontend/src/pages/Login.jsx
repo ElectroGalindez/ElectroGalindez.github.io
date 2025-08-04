@@ -1,7 +1,8 @@
+// src/components/Login.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Auth.css';
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from '../context/AuthContext';
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -22,7 +23,7 @@ function Login() {
       const res = await fetch('http://localhost:3001/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
@@ -40,43 +41,63 @@ function Login() {
       }
 
       login(user, token);
-
       setError('');
       navigate('/');
     } catch (err) {
-      setError('Error de red, intenta nuevamente');
-      console.error("Error de conexión:", err);
+      setError('Error de red. Intenta nuevamente.');
+      console.error('Error de conexión:', err);
     }
   };
 
   return (
     <div className="auth-container">
-      <h2>Iniciar sesión</h2>
-      <form onSubmit={handleLogin}>
-        <input
-          type="email"
-          placeholder="Correo electrónico"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
+      <div className="auth-card">
+        <h2 className="auth-title">Iniciar sesión</h2>
+        <form onSubmit={handleLogin} noValidate>
+          <div className="input-group">
+            <input
+              type="email"
+              id="email"
+              placeholder=" "
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              aria-label="Correo electrónico"
+            />
+            <label htmlFor="email">Correo electrónico</label>
+          </div>
 
-        <input
-          type="password"
-          placeholder="Contraseña"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+          <div className="input-group">
+            <input
+              type="password"
+              id="password"
+              placeholder=" "
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              aria-label="Contraseña"
+            />
+            <label htmlFor="password">Contraseña</label>
+          </div>
 
-        <button type="submit">Entrar</button>
-        
-        {error && <p className="error-message">{error}</p>}
-      </form>
+          {error && <p className="error-message" role="alert">{error}</p>}
 
-      <p className="auth-switch">
-        ¿No tienes una cuenta? <a href="/register">Regístrate aquí</a>
-      </p>
+          <button type="submit" className="auth-button">
+            Entrar
+          </button>
+        </form>
+
+        <p className="auth-switch">
+          ¿No tienes una cuenta?{' '}
+          <button
+            type="button"
+            onClick={() => navigate('/register')}
+            className="link-button"
+          >
+            Regístrate aquí
+          </button>
+        </p>
+      </div>
     </div>
   );
 }

@@ -1,8 +1,9 @@
+// src/components/Register.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import "../styles/Auth.css"; 
+import "../styles/Auth.css";
 
 function Register() {
   const [email, setEmail] = useState("");
@@ -13,7 +14,7 @@ function Register() {
   const handleRegister = async (e) => {
     e.preventDefault();
 
-    // Validación básica antes de enviar la solicitud
+    // Validaciones
     if (!/\S+@\S+\.\S+/.test(email)) {
       toast.error("Correo electrónico no válido");
       return;
@@ -39,8 +40,8 @@ function Register() {
       const data = await res.json();
 
       if (res.ok) {
-        toast.success("Registro exitoso 🎉");
-        setTimeout(() => navigate("/login"), 1000);
+        toast.success("¡Registro exitoso! 🎉");
+        setTimeout(() => navigate("/login"), 1500);
       } else {
         toast.error(data.message || "Error en el registro.");
       }
@@ -51,34 +52,64 @@ function Register() {
 
   return (
     <div className="auth-container">
-      <h2>Crear cuenta</h2>
-      <form onSubmit={handleRegister}>
-        <input
-          type="email"
-          placeholder="Correo electrónico"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Contraseña"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Confirmar contraseña"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          required
-        />
-        <button type="submit">Registrarse</button>
-      </form>
-      <p className="auth-switch">
-        ¿Ya tienes una cuenta? <a href="/login">Inicia sesión aquí</a>
-      </p>
+      <div className="auth-card">
+        <h2 className="auth-title">Crear cuenta</h2>
+        <form onSubmit={handleRegister} noValidate>
+          <div className="input-group">
+            <input
+              type="email"
+              id="email"
+              placeholder=" "
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              aria-label="Correo electrónico"
+            />
+            <label htmlFor="email">Correo electrónico</label>
+          </div>
+
+          <div className="input-group">
+            <input
+              type="password"
+              id="password"
+              placeholder=" "
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              aria-label="Contraseña"
+            />
+            <label htmlFor="password">Contraseña</label>
+          </div>
+
+          <div className="input-group">
+            <input
+              type="password"
+              id="confirmPassword"
+              placeholder=" "
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              aria-label="Confirmar contraseña"
+            />
+            <label htmlFor="confirmPassword">Confirmar contraseña</label>
+          </div>
+
+          <button type="submit" className="auth-button">
+            Registrarse
+          </button>
+        </form>
+
+        <p className="auth-switch">
+          ¿Ya tienes una cuenta?{' '}
+          <button
+            type="button"
+            onClick={() => navigate('/login')}
+            className="link-button"
+          >
+            Inicia sesión aquí
+          </button>
+        </p>
+      </div>
     </div>
   );
 }

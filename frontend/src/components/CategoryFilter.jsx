@@ -22,12 +22,14 @@ function CategoryFilter({ onSelectCategory }) {
 
   const handleCategoryClick = (id) => {
     setSelected(id);
-    onSelectCategory(id); // Esto se conecta con ProductList
+    onSelectCategory(id); // Se conecta con ProductList
   };
 
   return (
-    <div className="category-filter">
+    <div className="category-filter" role="tablist">
       <button
+        role="tab"
+        aria-selected={selected === null}
         className={`category-button ${selected === null ? "active" : ""}`}
         onClick={() => handleCategoryClick(null)}
       >
@@ -37,6 +39,8 @@ function CategoryFilter({ onSelectCategory }) {
       {categories.map((cat) => (
         <button
           key={cat.id}
+          role="tab"
+          aria-selected={selected === cat.id}
           className={`category-button ${selected === cat.id ? "active" : ""}`}
           onClick={() => handleCategoryClick(cat.id)}
         >
@@ -48,4 +52,3 @@ function CategoryFilter({ onSelectCategory }) {
 }
 
 export default CategoryFilter;
-

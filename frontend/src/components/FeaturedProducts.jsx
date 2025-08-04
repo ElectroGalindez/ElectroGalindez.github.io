@@ -1,35 +1,41 @@
-import { Link } from 'react-router-dom';
-import { useCart } from '../context/CartContext'; 
+// src/components/FeaturedProducts.jsx
+import React from 'react';
+import ProductCard from './ProductCard';
 import '../styles/FeaturedProducts.css';
 
-const FeaturedProducts = ({ products = [] }) => {
-  const { addToCart } = useCart(); 
+function FeaturedProducts({ products, loading }) {
+  if (loading) {
+    return (
+      <div className="featured-products">
+        <h2 className="section-title">Cargando productos...</h2>
+        <div className="skeleton-grid">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="skeleton-card"></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (products.length === 0) {
+    return (
+      <div className="featured-products">
+        <h2 className="section-title">No hay productos disponibles</h2>
+        <p className="no-products">Intenta con otra categoría o vuelve más tarde.</p>
+      </div>
+    );
+  }
 
   return (
-    <section className="featured-products">
-      <h2>Productos Destacados</h2>
+    <div className="featured-products">
+      <h2 className="section-title">Productos Destacados</h2>
       <div className="products-grid">
-        {products.slice(0, 6).map((product) => (
-          <div key={product.id} className="product-card">
-            <img src={product.image_url} alt={product.name} />
-            <h3>{product.name}</h3>
-            <p>€{product.price}</p>
-            <div className="button-group">
-              <Link to={`/products/${product.id}`} className="btn">
-                Ver más
-              </Link>
-              <button
-                className="btn add-cart"
-                onClick={() => addToCart(product)}
-              >
-                Agregar al carrito
-              </button>
-            </div>
-          </div>
+        {products.map(product => (
+          <ProductCard key={product.id} product={product} />
         ))}
       </div>
-    </section>
+    </div>
   );
-};
+}
 
 export default FeaturedProducts;
