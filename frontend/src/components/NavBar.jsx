@@ -39,7 +39,7 @@ function Navbar() {
           <div className="navbar-brand">
             <Link to="/" aria-label="Inicio">
               <img 
-                src="../assets/logo.jpeg" 
+                src="./logo.png?v=1" 
                 alt="ElectroGalíndez" 
                 className="logo-image" 
               />

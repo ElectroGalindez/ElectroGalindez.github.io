@@ -71,10 +71,10 @@
 
 /* Logo */
 .navbar-brand .logo-image {
-  height: 42px;
+  height: 40px;
   width: auto;
-  border-radius: 12px;
-  transition: var(--transition);
+  border-radius: 8px;
+  transition: transform 0.3s ease;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.05));
 }
 
