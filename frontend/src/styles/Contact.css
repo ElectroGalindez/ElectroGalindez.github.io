@@ -45,7 +45,7 @@
   border: 1px solid var(--border-color);
   border-radius: 8px;
   outline: none;
-  background: var(--bg);
+  background: #f8f4eb;
   color: var(--text);
 }
 

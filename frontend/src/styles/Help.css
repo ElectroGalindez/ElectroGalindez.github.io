@@ -28,7 +28,7 @@
 }
 
 .help-card {
-  background: var(--bg);
+  background: #f8f4eb;
   border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 1.5rem;

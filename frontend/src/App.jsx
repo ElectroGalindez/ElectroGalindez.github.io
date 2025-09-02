@@ -1,7 +1,5 @@
 // src/App.jsx
 import { Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
-import { AdminProvider } from "./context/AdminContext";
 
 import PublicLayout from "./pages/PublicLayout";
 import AdminLayout from "./pages/admin/AdminLayout";
@@ -14,15 +12,14 @@ import OrderSuccess from "./pages/OrderSuccess";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
+import ErrorBoundary from './components/ErrorBoundary';
 
-// ✅ Importa las nuevas páginas
 import About from "./pages/About";
 import Help from "./pages/Help";
 import Contact from "./pages/Contact";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 
-// Páginas de Admin
 import DashboardHome from "./pages/admin/DashboardHome";
 import ProductAdmin from "./pages/admin/ProductAdmin";
 import CategoryAdmin from "./pages/admin/CategoryAdmin";
@@ -36,9 +33,8 @@ import "./styles/App.css";
 
 function App() {
   return (
-    <AuthProvider>
+    <ErrorBoundary>
       <Routes>
-        {/* 🧭 RUTAS PÚBLICAS */}
         <Route path="/" element={<PublicLayout />}>
           <Route index element={<Home />} />
           <Route path="products" element={<ProductList />} />
@@ -48,8 +44,6 @@ function App() {
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
           <Route path="profile" element={<Profile />} />
-          
-          {/* ✅ Rutas corregidas (sin / al inicio) */}
           <Route path="about" element={<About />} />
           <Route path="help" element={<Help />} />
           <Route path="contact" element={<Contact />} />
@@ -57,14 +51,11 @@ function App() {
           <Route path="privacy" element={<Privacy />} />
         </Route>
 
-        {/* 🔒 RUTAS ADMIN */}
         <Route
           path="/admin"
           element={
             <ProtectedRoute roleRequired="admin">
-              <AdminProvider>
-                <AdminLayout />
-              </AdminProvider>
+              <AdminLayout />
             </ProtectedRoute>
           }
         >
@@ -78,7 +69,7 @@ function App() {
       </Routes>
 
       <ToastContainer position="top-right" autoClose={3000} />
-    </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

@@ -1,47 +1,77 @@
 // src/pages/ProductDetail.jsx
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useCart } from "../context/CartContext";
+import { useStore } from "../context/StoreContext";
+import WhatsAppButton from "../components/WhatsAppButton";
 import "../styles/ProductDetail.css";
 
 function ProductDetail() {
   const { id } = useParams();
-  const { addToCart } = useCart();
+  const { products, getProductById } = useStore();
   const navigate = useNavigate();
+
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const formatPrice = (price) =>
+    new Intl.NumberFormat('es-CU', {
+      style: 'currency',
+      currency: 'CUP',
+    }).format(price || 0);
+
   useEffect(() => {
-    setLoading(true);
-    setError('');
+    let isMounted = true;
 
-    fetch(`http://localhost:3001/api/products/${id}`)
-      .then((res) => {
-        if (!res.ok) {
-          if (res.status === 404) throw new Error("Producto no encontrado");
-          throw new Error(`Error ${res.status}: ${res.statusText}`);
+    const loadProduct = async () => {
+      setLoading(true);
+      setError('');
+
+      try {
+        const cached = products.find(p => p._id === id);
+        if (isMounted && cached) {
+          setProduct(cached);
+          setLoading(false);
+          return;
         }
-        return res.json();
-      })
-      .then((data) => {
-        const productData = data.product || data;
-        if (!productData.name) throw new Error("Datos del producto inválidos");
-        setProduct(productData);
-      })
-      .catch((err) => {
-        console.error("Error al cargar producto:", err);
-        setError(err.message);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [id]);
 
-  // Skeleton Loading
+        const fetchedProduct = await getProductById(id);
+        if (isMounted) {
+          setProduct(fetchedProduct);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(err.message.includes('404') 
+            ? "Producto no encontrado" 
+            : "No se pudo cargar el producto. Intenta más tarde."
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadProduct();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id, products, getProductById]);
+
+  const handleWhatsApp = () => {
+    if (!product) return;
+    const message = encodeURIComponent(
+      `Hola, estoy interesado en el producto:\n\n${product.name}\nPrecio: ${formatPrice(product.price)}\n\n¿Tiene disponible?`
+    );
+    const whatsappUrl = `https://wa.me/5358956749?text=${message}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
   if (loading) {
     return (
-      <div className="product-detail" aria-live="polite">
+      <div className="product-detail loading">
         <div className="loading-skeleton">
           <div className="skeleton-image"></div>
           <div className="skeleton-info">
@@ -55,14 +85,14 @@ function ProductDetail() {
             </div>
           </div>
         </div>
+        <WhatsAppButton />
       </div>
     );
   }
 
-  // Error o producto no encontrado
   if (error || !product) {
     return (
-      <div className="product-detail">
+      <div className="product-detail error">
         <div className="error-container" role="alert">
           <h2>Producto no disponible</h2>
           <p>
@@ -71,20 +101,8 @@ function ProductDetail() {
               : "No se pudo cargar el producto. Intenta más tarde."}
           </p>
           <div className="error-actions">
-            <button
-              onClick={() => navigate(-1)}
-              className="btn-back"
-              aria-label="Volver a la página anterior"
-            >
-              ← Volver atrás
-            </button>
-            <button
-              onClick={() => navigate('/products')}
-              className="btn-home"
-              aria-label="Ir a la página de productos"
-            >
-              🏠 Ver todos los productos
-            </button>
+            <button onClick={() => navigate(-1)} className="btn-back">← Volver atrás</button>
+            <button onClick={() => navigate('/products')} className="btn-home">🏠 Ver todos los productos</button>
           </div>
         </div>
       </div>
@@ -92,56 +110,86 @@ function ProductDetail() {
   }
 
   return (
-    <div className="product-detail" itemScope itemType="https://schema.org/Product">
-      {/* Imagen del producto */}
-      <div className="product-image-container" data-testid="product-image-container">
+    <div className="product-detail" itemScope itemType="https://schema.org/Product" aria-labelledby="product-title">
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Product",
+          "name": product.name,
+          "image": product.images?.[0] || null,
+          "description": product.description || "",
+          "offers": {
+            "@type": "Offer",
+            "price": product.price,
+            "priceCurrency": "CUP",
+            "availability": "https://schema.org/InStock",
+            "seller": { "@type": "Organization", "name": "ElectroGalíndez" }
+          }
+        })}
+      </script>
+
+      <div className="product-gallery">
         <img
-          src={product.image_url || '/placeholders/product-large.png'}
+          src={product.images?.[0] || '/placeholders/product-large.png'}
           alt={product.name}
-          className="product-image"
+          className="product-main-image"
           loading="lazy"
           itemProp="image"
-          onError={(e) => {
-            e.target.src = '/placeholders/fallback-large.png';
-          }}
+          onError={(e) => { e.target.src = '/placeholders/fallback-large.png'; }}
         />
+        {product.featured && <span className="badge featured">⭐ Destacado</span>}
       </div>
 
-      {/* Información del producto */}
       <div className="product-info">
-        <h1 itemProp="name">{product.name}</h1>
-        <p className="product-price" itemProp="offers" itemScope itemType="https://schema.org/Offer">
-          <span itemProp="price">€{product.price?.toFixed(2) || '0.00'}</span>
+        <h1 id="product-title" itemProp="name">{product.name}</h1>
+        
+        <p 
+          className="product-price" 
+          itemProp="offers" 
+          itemScope 
+          itemType="https://schema.org/Offer"
+          >
+            <meta itemProp="priceCurrency" content="CUP" />
+            <span itemProp="price">
+              {new Intl.NumberFormat('es-CU', {
+                style: 'currency',
+                currency: 'CUP'
+              }).format(product.price).replace('CUP', '').trim()}
+            </span>
         </p>
 
         {product.description && (
-          <div className="product-description" itemProp="description">
+          <div className="product-description">
             <h3>Descripción</h3>
-            <p>{product.description}</p>
+            <p itemProp="description">{product.description}</p>
           </div>
         )}
 
-        {/* Acciones */}
-        <div className="product-actions">
-          <button
-            onClick={() => addToCart(product)}
-            className="btn-add-to-cart"
-            disabled={!product.stock || product.stock <= 0}
-            aria-label={`Agregar ${product.name} al carrito`}
-            itemProp="potentialAction"
-          >
-            {product.stock > 0 ? '➕ Agregar al carrito' : '🚫 Agotado'}
-          </button>
+        {product.specifications && Object.keys(product.specifications).length > 0 && (
+          <div className="product-specs">
+            <h3>Especificaciones</h3>
+            <dl>
+              {Object.entries(product.specifications).map(([key, value]) => (
+                <div key={key} className="spec-item">
+                  <dt>{key}</dt>
+                  <dd>{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        )}
 
-          <button
-            onClick={() => navigate(-1)}
-            className="btn-continue"
-            aria-label="Seguir comprando"
-          >
+        <div className="product-actions">
+          <button onClick={handleWhatsApp} className="btn-whatsapp" aria-label={`Solicitar ${product.name} por WhatsApp`}>
+            💬 Solicitar por WhatsApp
+          </button>
+          <button onClick={() => navigate(-1)} className="btn-continue" aria-label="Seguir comprando">
             ← Seguir comprando
           </button>
         </div>
       </div>
+
+      <WhatsAppButton />
     </div>
   );
 }

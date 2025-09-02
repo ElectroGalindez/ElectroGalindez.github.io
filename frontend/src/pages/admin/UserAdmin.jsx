@@ -1,29 +1,32 @@
 // src/components/UserAdmin.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import { useAdmin } from "../../context/AdminContext";
+import { FaUser, FaEnvelope, FaShieldAlt, FaUsers } from 'react-icons/fa';
 import "../../styles/UserAdmin.css";
 
 function UserAdmin() {
-  const { users, loading, updateUserRole, loadSectionData } = useAdmin();
+  const { users, loading, updateUserRole, loadUsers } = useAdmin(); 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const usersPerPage = 10;
 
   useEffect(() => {
     if (users.length === 0 && !loading) {
-      loadSectionData('users').catch(console.error);
+      loadUsers();
+      
     }
-  }, [users, loading, loadSectionData]);
+  }, [users.length, loading, loadUsers]);
 
   const filteredUsers = useMemo(() => {
     return users.filter(user =>
-      user.email.toLowerCase().includes(search.toLowerCase()) ||
-      user.id.toString().includes(search) ||
-      user.role.toLowerCase().includes(search.toLowerCase())
+      user.email?.toLowerCase().includes(search.toLowerCase()) ||
+      user._id?.includes(search) ||
+      user.role?.toLowerCase().includes(search.toLowerCase())
     );
   }, [users, search]);
 
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+
   const paginatedUsers = useMemo(() => {
     const startIndex = (page - 1) * usersPerPage;
     return filteredUsers.slice(startIndex, startIndex + usersPerPage);
@@ -39,23 +42,24 @@ function UserAdmin() {
 
   if (loading) {
     return (
-      <div className="user-admin loading">
-        <div className="spinner"></div>
+      <div className="user-admin loading" aria-live="polite">
+        <FaUsers size={40} className="loading-icon" />
         <p>Cargando usuarios...</p>
       </div>
     );
   }
 
   return (
-    <div className="user-admin">
+    <div className="user-admin" aria-labelledby="user-admin-title">
       <header className="user-header">
-        <h1>Gestión de Usuarios</h1>
+        <h1 id="user-admin-title">Gestión de Usuarios</h1>
         <p>Administra los roles y permisos de los usuarios de la tienda.</p>
       </header>
 
       {/* Barra de búsqueda */}
       <div className="user-toolbar">
         <div className="search-wrapper">
+          <FaUser className="search-icon" />
           <input
             type="text"
             placeholder="Buscar por email, ID o rol..."
@@ -75,9 +79,9 @@ function UserAdmin() {
         <table className="user-table">
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Correo Electrónico</th>
-              <th>Rol</th>
+              <th><FaUser size={14} /> ID</th>
+              <th><FaEnvelope size={14} /> Correo Electrónico</th>
+              <th><FaShieldAlt size={14} /> Rol</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -90,8 +94,8 @@ function UserAdmin() {
               </tr>
             ) : (
               paginatedUsers.map((u) => (
-                <tr key={u.id} className="user-row">
-                  <td>{u.id}</td>
+                <tr key={u._id} className="user-row">
+                  <td>{u._id?.slice(-6)}</td>
                   <td className="user-email">{u.email}</td>
                   <td>
                     <span className={`role-badge role-${u.role}`}>
@@ -101,7 +105,7 @@ function UserAdmin() {
                   <td>
                     <select
                       value={u.role}
-                      onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                      onChange={(e) => handleRoleChange(u._id, e.target.value)}
                       disabled={loading}
                       aria-label={`Cambiar rol de ${u.email}`}
                     >
@@ -123,6 +127,7 @@ function UserAdmin() {
             disabled={page === 1 || loading}
             onClick={() => setPage(p => Math.max(1, p - 1))}
             aria-label="Página anterior"
+            className="pagination-btn"
           >
             &laquo;
           </button>
@@ -139,7 +144,7 @@ function UserAdmin() {
             return (
               <button
                 key={i}
-                className={page === pageNum ? "active" : ""}
+                className={`pagination-btn ${page === pageNum ? "active" : ""}`}
                 onClick={() => setPage(pageNum)}
                 disabled={loading}
                 aria-label={`Ir a página ${pageNum}`}
@@ -153,6 +158,7 @@ function UserAdmin() {
             disabled={page === totalPages || loading}
             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
             aria-label="Página siguiente"
+            className="pagination-btn"
           >
             &raquo;
           </button>

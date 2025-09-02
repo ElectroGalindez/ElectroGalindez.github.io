@@ -17,52 +17,32 @@ function Login() {
     setError('');
     setLoading(true);
 
-    if (!/\S+@\S+\.\S+/.test(email)) {
-      setError('Por favor, ingresa un correo electrónico válido.');
-      setLoading(false);
-      return;
-    }
-
-    if (password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres.');
-      setLoading(false);
-      return;
-    }
-
     try {
       const response = await fetch('http://localhost:3001/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.trim(), password }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        const errorMsg = data.error || data.message || 'Credenciales inválidas';
-        setError(errorMsg);
-        if (response.status === 401) {
-          console.log('Error 401: Credenciales incorrectas');
-        }
-        return;
+        throw new Error(data.error || 'Credenciales inválidas');
       }
 
-      const { user, token } = data;
-
-      if (!user || !user._id) {
-        setError('Error: usuario no válido en la respuesta.');
-        return;
+      if (!data.token || !data.user) {
+        throw new Error('Respuesta del servidor incompleta');
       }
 
-      login(user, token);
-      navigate('/');
-    } catch (err) {
-      if (err.name === 'TypeError' || err.message.includes('failed to fetch')) {
-        setError('No se pudo conectar al servidor. Verifica tu conexión o que el backend esté corriendo en http://localhost:3001');
+      login(data.user, data.token);
+
+      if (data.user.role === 'admin') {
+        navigate('/');
       } else {
-        setError('Error inesperado. Intenta más tarde.');
+        navigate('/');
       }
-      console.error('Error de autenticación:', err);
+    } catch (err) {
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -71,13 +51,10 @@ function Login() {
   return (
     <div className="auth-container" aria-labelledby="login-title">
       <div className="auth-card">
-        <h2 id="login-title" className="auth-title">
-          Iniciar sesión
-        </h2>
-        <p className="auth-subtitle">Accede a tu cuenta en ElectroGalíndez</p>
+        <h2 id="login-title">Iniciar sesión</h2>
+        <p>Accede a tu cuenta en ElectroGalíndez</p>
 
-        <form onSubmit={handleLogin} noValidate>
-          {/* Campo de correo */}
+        <form onSubmit={handleLogin} autoComplete="on">
           <div className="input-group">
             <input
               type="email"
@@ -87,13 +64,11 @@ function Login() {
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
               required
-              aria-invalid={error && email ? 'true' : 'false'}
-              aria-describedby="email-error"
+              autoComplete="username"
             />
             <label htmlFor="email">Correo electrónico</label>
           </div>
 
-          {/* Campo de contraseña */}
           <div className="input-group">
             <input
               type="password"
@@ -103,39 +78,18 @@ function Login() {
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
               required
-              minLength="6"
-              aria-invalid={error && password ? 'true' : 'false'}
-              aria-describedby="password-error"
+              autoComplete="current-password"
             />
             <label htmlFor="password">Contraseña</label>
           </div>
 
-          {/* Mensaje de error */}
-          {error && (
-            <p className="error-message" role="alert" id="auth-error">
-              {error}
-            </p>
-          )}
+          {error && <p className="error-message">{error}</p>}
 
-          {/* Botón de envío */}
-          <button
-            type="submit"
-            className="auth-button"
-            disabled={loading}
-            aria-busy={loading}
-          >
-            {loading ? (
-              <>
-                <span className="spinner"></span>
-                Iniciando sesión...
-              </>
-            ) : (
-              'Entrar'
-            )}
+          <button type="submit" disabled={loading} className="auth-button">
+            {loading ? '...' : 'Entrar'}
           </button>
         </form>
 
-        {/* Enlace a registro */}
         <p className="auth-switch">
           ¿No tienes cuenta?{' '}
           <button
@@ -143,7 +97,6 @@ function Login() {
             onClick={() => navigate('/register')}
             className="link-button"
             disabled={loading}
-            aria-label="Ir a la página de registro"
           >
             Regístrate aquí
           </button>

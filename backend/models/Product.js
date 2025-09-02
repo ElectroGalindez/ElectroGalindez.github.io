@@ -1,3 +1,4 @@
+// models/Product.js
 const mongoose = require('mongoose');
 
 const productSchema = new mongoose.Schema({
@@ -20,33 +21,13 @@ const productSchema = new mongoose.Schema({
     ref: 'Category',
     required: true
   },
-  brand: {
-    type: String,
-    trim: true
-  },
-  model: {
-    type: String,
-    trim: true
-  },
   images: [{
-    type: String
+    type: String,
+    required: true
   }],
-  specifications: {
-    type: Map,
-    of: String
-  },
-  stock: {
-    type: Number,
-    default: 0,
-    min: 0
-  },
   active: {
     type: Boolean,
     default: true
-  },
-  featured: {
-    type: Boolean,
-    default: false
   }
 }, {
   timestamps: true

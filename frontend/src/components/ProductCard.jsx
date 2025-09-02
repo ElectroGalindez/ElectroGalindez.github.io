@@ -1,39 +1,40 @@
 // src/components/ProductCard.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useCart } from '../context/CartContext';
-import '../styles/ProductCard.css';
 
-function ProductCard({ product }) {
-  const { addToCart } = useCart();
-
-  if (!product) return null;
-
+const ProductCard = ({ product, category, formatPrice }) => {
   return (
     <div className="product-card">
-      <Link to={`/products/${product.id}`} className="product-card__link">
-        <div className="product-card__image-wrapper">
+      <Link to={`/products/${product._id}`} className="product-link">
+        <div className="product-image-wrapper">
           <img
-            src={product.image_url}
+            src={product.images?.[0] || '/placeholders/product.png'}
             alt={product.name}
             loading="lazy"
-            className="product-card__image"
+            onError={(e) => { e.target.src = '/placeholders/fallback.png'; }}
+            className="product-image"
           />
+          {product.featured && <span className="badge featured">⭐ Destacado</span>}
         </div>
-        <div className="product-card__info">
-          <h3 className="product-card__title">{product.name}</h3>
-          <p className="product-card__price">€{product.price.toFixed(2)}</p>
-        </div>
+        <h3 className="product-name">{product.name}</h3>
+        <p className="product-category">{category?.name || 'Sin categoría'}</p>
+        <p className="product-price">{formatPrice(product.price)}</p>
       </Link>
-      <button
-        onClick={() => addToCart(product)}
-        className="product-card__add"
-        aria-label={`Agregar ${product.name} al carrito`}
-      >
-        + Carrito
-      </button>
+      <div className="button-group">
+        <Link to={`/products/${product._id}`} className="btn btn-outline">
+          Ver detalle
+        </Link>
+        <a
+          href={`https://wa.me/5358956749?text=Hola,%20estoy%20interesado%20en%20el%20producto%20${encodeURIComponent(product.name)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn btn-primary"
+        >
+          💬 Solicitar
+        </a>
+      </div>
     </div>
   );
-}
+};
 
-export default ProductCard;
+export default React.memo(ProductCard);

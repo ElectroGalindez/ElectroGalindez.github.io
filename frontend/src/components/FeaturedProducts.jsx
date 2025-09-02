@@ -1,41 +1,40 @@
 // src/components/FeaturedProducts.jsx
 import React from 'react';
-import ProductCard from './ProductCard';
+import { Link } from 'react-router-dom';
+import { useStore } from '../context/StoreContext';
 import '../styles/FeaturedProducts.css';
 
-function FeaturedProducts({ products, loading }) {
-  if (loading) {
-    return (
-      <div className="featured-products">
-        <h2 className="section-title">Cargando productos...</h2>
-        <div className="skeleton-grid">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="skeleton-card"></div>
-          ))}
-        </div>
-      </div>
-    );
-  }
+const FeaturedProducts = ({ formatPrice }) => {
+  const { products, categories, loading } = useStore();
+  const featured = products.filter(p => p.featured).slice(0, 6);
 
-  if (products.length === 0) {
-    return (
-      <div className="featured-products">
-        <h2 className="section-title">No hay productos disponibles</h2>
-        <p className="no-products">Intenta con otra categoría o vuelve más tarde.</p>
-      </div>
-    );
-  }
+  if (loading.products || featured.length === 0) return null;
 
   return (
-    <div className="featured-products">
-      <h2 className="section-title">Productos Destacados</h2>
-      <div className="products-grid">
-        {products.map(product => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
+    <div className="featured-grid">
+      {featured.map(product => {
+        const category = categories.find(c => c._id === product.category?._id);
+        return (
+          <div key={product._id} className="featured-card">
+            <Link to={`/products/${product._id}`} className="featured-link">
+              <div className="featured-image-wrapper">
+                <img
+                  src={product.images?.[0] || '/placeholders/product.png'}
+                  alt={product.name}
+                  loading="lazy"
+                  onError={(e) => { e.target.src = '/placeholders/fallback.png'; }}
+                  className="featured-image"
+                />
+              </div>
+              <h3 className="featured-name">{product.name}</h3>
+              <p className="featured-price">{formatPrice(product.price)}</p>
+              <p className="featured-category">{category?.name}</p>
+            </Link>
+          </div>
+        );
+      })}
     </div>
   );
-}
+};
 
 export default FeaturedProducts;

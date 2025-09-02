@@ -1,49 +1,77 @@
 // src/components/Navbar.jsx
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import {
-  FaUserCircle,
-  FaUserShield,
-  FaSearch,
-  FaShoppingCart,
-  FaPhoneAlt,
-} from 'react-icons/fa';
+import { useApp } from '../context/AppContext';
+import { FaUserCircle, FaUserShield, FaSearch, FaShoppingCart, FaPhoneAlt } from 'react-icons/fa';
 import SearchBar from './SearchBar';
 import '../styles/Navbar.css';
 
 function Navbar() {
   const { cart } = useCart();
   const { user } = useAuth();
+  const { language, setLanguage, currency, setCurrency, t } = useApp();
   const navigate = useNavigate();
-  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
-  // Detectar scroll
+  // Detectar tamaño de pantalla
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const totalItems = useMemo(
+    () => cart.reduce((sum, item) => sum + item.quantity, 0),
+    [cart]
+  );
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Alternar barra de búsqueda (móvil)
   const toggleSearch = () => setIsSearchOpen((prev) => !prev);
 
+  const navLinks = useMemo(() => [
+    { to: '/products', label: t('allProducts') },
+    // { to: '/products', label: t('newArrivals') },
+    { to: '/products/featured', label: t('offers') },
+    { to: '/help', label: t('help') },
+    { to: '/about', label: t('aboutUs') },
+    { to: '/contact', label: t('contact') },
+  ], [t]);
+
+  const handleCurrencyChange = (e) => {
+    setCurrency(e.target.value);
+  };
+
+  const isCompact = windowWidth <= 480;
+
   return (
-    <header className={`navbar ${scrolled ? 'scrolled' : ''}`}>
-      {/* Barra superior: Logo, Búsqueda, Acciones */}
+    <header className={`navbar ${scrolled ? 'scrolled' : ''}`} role="banner">
+      {/* Fila 1: Logo, Búsqueda, Acciones */}
       <div className="navbar-top">
         <div className="navbar-container">
           {/* Logo */}
           <div className="navbar-brand">
             <Link to="/" aria-label="Inicio de ElectroGalíndez">
               <img
-                src="./logo.jpeg?v=1"
-                alt="ElectroGalíndez"
+                src="/logo.svg"
+                alt="ElectroGalíndez - Tienda de electrodomésticos en Cuba"
                 className="logo-image"
                 loading="eager"
+                width="250"
+                height="80"
+                onError={(e) => {
+                  e.target.src = '/placeholders/logo-fallback.png';
+                  e.target.alt = 'ElectroGalíndez';
+                }}
               />
             </Link>
           </div>
@@ -53,41 +81,67 @@ function Navbar() {
             <SearchBar />
           </div>
 
-          {/* Búsqueda (Móvil - Icono) */}
-          <div className="search-mobile">
-            <button
-              onClick={toggleSearch}
-              aria-label="Buscar productos"
-              className="search-toggle-btn"
-            >
-              <FaSearch size={18} />
-            </button>
-          </div>
-
-          {/* Acciones: Perfil y Carrito */}
+          {/* Acciones */}
           <div className="navbar-actions">
+            {/* Selector de moneda */}
+            <select
+              className="currency-selector"
+              aria-label="Seleccionar moneda"
+              value={currency}
+              onChange={handleCurrencyChange}
+            >
+              <option value="CUP">CUP</option>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+            </select>
+
+            {/* Contacto */}
+            <a
+              href="https://wa.me/5358956749"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="contact-link"
+              aria-label="Contactar por WhatsApp"
+            >
+              <FaPhoneAlt size={isCompact ? 16 : 18} />
+              {!isCompact && <span>+53 58956749</span>}
+            </a>
+
+            {/* Perfil */}
             <Link
               to={user ? '/profile' : '/login'}
               className="navbar-link auth"
               aria-label={user ? 'Ir a perfil' : 'Iniciar sesión'}
             >
-              {user ? <FaUserShield size={20} /> : <FaUserCircle size={20} />}
-              <span>{user ? 'Perfil' : 'Iniciar sesión'}</span>
+              {user ? (
+                <FaUserShield size={isCompact ? 16 : 18} />
+              ) : (
+                <FaUserCircle size={isCompact ? 16 : 18} />
+              )}
+              {!isCompact && <span>{user ? 'Perfil' : 'Iniciar sesión'}</span>}
             </Link>
 
+            {/* Carrito */}
             <Link
               to="/cart"
               className="navbar-link cart"
               aria-label={`Carrito (${totalItems} ítems)`}
             >
-              <FaShoppingCart size={20} />
+              <FaShoppingCart size={isCompact ? 16 : 20} />
               {totalItems > 0 && (
-                <span className="cart-badge" aria-label="Cantidad en carrito">
-                  {totalItems}
-                </span>
+                <span className="cart-badge">{totalItems}</span>
               )}
             </Link>
           </div>
+
+          {/* Botón de búsqueda móvil */}
+          <button
+            className="search-toggle"
+            onClick={toggleSearch}
+            aria-label="Buscar productos"
+          >
+            <FaSearch size={20} />
+          </button>
         </div>
 
         {/* Búsqueda móvil desplegable */}
@@ -98,44 +152,24 @@ function Navbar() {
         )}
       </div>
 
-      {/* Menú principal */}
+      {/* Fila 2: Menú principal */}
       <nav className="navbar-main" role="navigation" aria-label="Menú principal">
         <div className="navbar-container">
-          <ul className="navbar-menu" role="menubar">
-            {[
-              { to: '/', label: 'Todos los productos' },
-              { to: '/products', label: 'Novedades' },
-              { to: '/offers', label: 'Ofertas' },
-              { to: '/help', label: 'Ayuda' },
-              { to: '/about', label: 'Sobre nosotros' },
-              { to: '/contact', label: 'Contacto' },
-            ].map((item) => (
-              <li key={item.to} role="none">
-                <Link
-                  to={item.to}
-                  className="menu-link"
-                  role="menuitem"
-                  aria-current={window.location.pathname === item.to ? 'page' : undefined}
-                >
-                  {item.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-
-          <div className="navbar-tools">
-            <select className="language-selector" aria-label="Idioma">
-              <option value="es">ES</option>
-              <option value="en">EN</option>
-            </select>
-            <select className="currency-selector" aria-label="Moneda">
-              <option value="CUP">CUP</option>
-              <option value="USD">USD</option>
-            </select>
-            <div className="contact-info" aria-label="Contacto por teléfono">
-              <FaPhoneAlt aria-hidden="true" />
-              <span>+53 58956749</span>
-            </div>
+          <div className="menu-wrapper">
+            <ul className="navbar-menu" role="menubar">
+              {navLinks.map((item) => (
+                <li key={item.to} role="none">
+                  <Link
+                    to={item.to}
+                    className={`menu-link ${location.pathname === item.to ? 'active' : ''}`}
+                    role="menuitem"
+                    aria-current={location.pathname === item.to ? 'page' : undefined}
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </nav>
@@ -143,4 +177,4 @@ function Navbar() {
   );
 }
 
-export default Navbar;
+export default React.memo(Navbar);

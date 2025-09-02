@@ -1,30 +1,363 @@
 /* src/styles/Home.css */
+
+/* Reset y base */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Variables de diseño (ElectroGalíndez) */
+:root {
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  --font-mono: 'Courier New', monospace;
+
+  /* Escala tipográfica */
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+
+  /* Espaciado */
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+
+  /* Radios */
+  --radius: 12px;
+  --radius-lg: 20px;
+  --radius-pill: 50px;
+
+  /* Sombra */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 8px 15px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 16px 30px rgba(0, 0, 0, 0.15);
+
+  /* Transiciones */
+  --transition: all 0.2s ease;
+
+  /* Colores */
+  --bg: #242424;
+  --bg-alt: #1c1c1e;
+  --text: #f8f4eb;
+  --text-secondary: #d1d1d6;
+  --border-color: #424245;
+  --primary: #0066cc;
+  --primary-hover: #0055aa;
+  --success: #28a745;
+  --whatsapp: #25D366;
+}
+
+/* Modo claro */
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #fafafa;
+    --bg-alt: #ffffff;
+    --text: #1d1d1f;
+    --text-secondary: #636366;
+    --border-color: #e5e5e7;
+  }
+}
+
+/* Layout principal */
 .home-page {
   min-height: 100vh;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  padding-bottom: var(--space-6);
 }
 
+/* Título de sección */
+.section-title {
+  text-align: center;
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  margin: var(--space-8) 0 var(--space-6);
+  color: var(--text);
+  padding: 0 var(--space-4);
+}
+
+/* ==================== HERO ==================== */
 .hero-section {
-  margin-bottom: 40px;
+  padding: var(--space-6) var(--space-4);
+  background: linear-gradient(135deg, var(--primary) 0%, #004080 100%);
+  color: white;
+  text-align: center;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  margin-bottom: var(--space-8);
+  box-shadow: var(--shadow-md);
 }
 
-.filter-section {
-  margin-bottom: 60px;
+.hero-section h1 {
+  font-size: var(--text-4xl);
+  font-weight: 700;
+  margin: 0 0 var(--space-3);
 }
 
-.featured-section {
-  padding: 0 20px 80px;
-  max-width: 1400px;
+.hero-section p {
+  font-size: var(--text-lg);
+  opacity: 0.9;
+  max-width: 50ch;
   margin: 0 auto;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .hero-section {
-    margin-bottom: 30px;
+/* ==================== CATEGORÍAS ==================== */
+.categories-section {
+  padding: 0 var(--space-4) var(--space-6);
+}
+
+.category-filter {
+  display: flex;
+  gap: var(--space-3);
+  overflow-x: auto;
+  padding: var(--space-3) 0;
+  scrollbar-width: none;
+}
+
+.category-filter::-webkit-scrollbar {
+  display: none;
+}
+
+.category-pill {
+  flex: 0 0 auto;
+  padding: var(--space-3) 1.25rem;
+  background: var(--bg-alt);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
+}
+
+.category-pill:hover,
+.category-pill.active {
+  background: var(--primary);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+/* ==================== PRODUCTOS DESTACADOS ==================== */
+.featured-section {
+  padding: 0 var(--space-4) var(--space-8);
+}
+
+.featured-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+  margin-top: var(--space-4);
+}
+
+.featured-card {
+  background: var(--bg-alt);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+}
+
+.featured-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.featured-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  height: 100%;
+}
+
+.featured-image {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  background: #333;
+}
+
+.featured-name {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  margin: var(--space-4) var(--space-4) var(--space-3);
+  color: var(--text);
+}
+
+.featured-price {
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: var(--primary);
+  margin: 0 var(--space-4) var(--space-4);
+}
+
+.btn-outline {
+  display: block;
+  margin: var(--space-4);
+  padding: 0.75rem;
+  text-align: center;
+  border: 1px solid var(--primary);
+  color: var(--primary);
+  background: transparent;
+  border-radius: var(--radius);
+  font-weight: 500;
+  transition: var(--transition);
+  text-decoration: none;
+}
+
+.btn-outline:hover {
+  background: var(--primary);
+  color: white;
+}
+
+/* ==================== CTA FINAL ==================== */
+.cta-section {
+  padding: var(--space-8) var(--space-4);
+  background: var(--bg-alt);
+  text-align: center;
+  margin: var(--space-8) 0;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+}
+
+.cta-content h3 {
+  font-size: var(--text-2xl);
+  margin: 0 0 var(--space-3);
+  color: var(--text);
+}
+
+.cta-content p {
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+  max-width: 40ch;
+  margin: 0 auto var(--space-4);
+}
+
+.btn-whatsapp-large {
+  display: inline-block;
+  padding: 0.85rem 1.5rem;
+  background: var(--whatsapp);
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+  border-radius: var(--radius-pill);
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+  transition: var(--transition);
+  font-size: var(--text-lg);
+}
+
+.btn-whatsapp-large:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(37, 211, 102, 0.4);
+}
+
+/* ==================== RESPONSIVE ==================== */
+
+/* Móviles pequeños (320px - 480px) */
+@media (max-width: 480px) {
+  .hero-section h1 {
+    font-size: var(--text-3xl);
   }
 
-  .filter-section {
-    margin-bottom: 40px;
+  .hero-section p {
+    font-size: var(--text-base);
+    max-width: 40ch;
+  }
+
+  .section-title {
+    font-size: var(--text-xl);
+    margin: var(--space-6) 0 var(--space-4);
+  }
+
+  .category-pill {
+    padding: var(--space-3) 1rem;
+    font-size: 0.8rem;
+  }
+
+  .featured-name {
+    font-size: var(--text-base);
+  }
+
+  .featured-price {
+    font-size: var(--text-lg);
+  }
+
+  .btn-whatsapp-large {
+    font-size: var(--text-base);
+    padding: 0.75rem 1.25rem;
+  }
+}
+
+/* Tablet (481px - 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+  .featured-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .hero-section h1 {
+    font-size: var(--text-4xl);
+  }
+}
+
+/* Desktop (769px+) */
+@media (min-width: 769px) {
+  .section-title {
+    font-size: var(--text-3xl);
+  }
+
+  .hero-section h1 {
+    font-size: var(--text-5xl);
+  }
+
+  .hero-section p {
+    font-size: var(--text-xl);
+    max-width: 50ch;
+  }
+
+  .category-filter {
+    justify-content: center;
+  }
+
+  .category-pill {
+    font-size: var(--text-base);
+    padding: var(--space-3) 1.5rem;
+  }
+
+  .featured-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-8);
+  }
+
+  .featured-image {
+    height: 200px;
+  }
+
+  .cta-section {
+    padding: var(--space-8);
+    margin: var(--space-8) auto;
+    max-width: 1200px;
+  }
+}
+
+/* Large Desktop (1024px+) */
+@media (min-width: 1024px) {
+  .featured-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .home-page {
+    padding: 0 1rem;
   }
 }

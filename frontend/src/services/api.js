@@ -15,11 +15,6 @@ export const getProductById = async (id) => {
 export const createOrder = async (items) => {
   const token = localStorage.getItem("token");
   
-  // ✅ Log para confirmar que entra aquí
-  console.log("✅ createOrder ejecutado");
-  console.log("🔑 Token usado:", token);
-  console.log("📦 Items:", items);
-
   if (!token) {
     throw new Error("No hay token de autenticación");
   }

@@ -1,44 +1,29 @@
+// backend/middleware/auth.js
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+require('dotenv').config();
 
-const authenticateToken = async (req, res, next) => {
+const JWT_SECRET = process.env.JWT_SECRET || 'tu_clave_secreta_fuerte_y_larga';
+
+exports.requireAuth = async (req, res, next) => {
   try {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: 'Acceso denegado' });
 
-    if (!token) {
-      return res.status(401).json({ error: 'Token de acceso requerido' });
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    // Buscar el usuario en MongoDB
+    const decoded = jwt.verify(token, JWT_SECRET);
     const user = await User.findById(decoded.id).select('-password');
-    if (!user) {
-      return res.status(401).json({ error: 'Usuario no encontrado' });
-    }
+    if (!user) return res.status(401).json({ error: 'Usuario no válido' });
 
     req.user = user;
     next();
   } catch (error) {
-    console.error('Error en autenticación:', error);
-    return res.status(403).json({ error: 'Token inválido' });
+    res.status(403).json({ error: 'Token inválido o expirado' });
   }
 };
 
-const requireAdmin = (req, res, next) => {
-  if (!req.user) {
-    return res.status(401).json({ error: 'No autenticado' });
+exports.requireAdmin = (req, res, next) => {
+  if (!req.user || req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Acceso denegado. Requiere rol de admin.' });
   }
-
-  if (req.user.role !== 'admin') {
-    return res.status(403).json({ error: 'Acceso denegado. Se requieren permisos de administrador.' });
-  }
-
   next();
-};
-
-module.exports = {
-  authenticateToken,
-  requireAdmin
 };

@@ -1,51 +1,50 @@
 // src/components/CategoryFilter.jsx
-import React, { useState, useEffect } from "react";
-import "../styles/CategoryFilter.css";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { useStore } from '../context/StoreContext';
+import '../styles/CategoryFilter.css';
 
-function CategoryFilter({ onSelectCategory }) {
-  const [categories, setCategories] = useState([]);
-  const [selected, setSelected] = useState(null); // null = "Todos"
+function CategoryFilter() {
+  const { categories, loading } = useStore();
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await fetch("http://localhost:3001/api/categories");
-        const data = await res.json();
-        setCategories(data);
-      } catch (err) {
-        console.error("Error al cargar categorías:", err);
-      }
-    };
+  if (loading.categories) {
+    return (
+      <div className="categories-grid loading">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <div key={`skeleton-${index}`} className="category-card skeleton">
+            <div className="skeleton-image"></div>
+            <div className="skeleton-text"></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
-    fetchCategories();
-  }, []);
-
-  const handleCategoryClick = (id) => {
-    setSelected(id);
-    onSelectCategory(id); // Se conecta con ProductList
-  };
+  if (!categories || categories.length === 0) {
+    return (
+      <div className="categories-grid no-categories">
+        <p>No hay categorías disponibles en este momento.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="category-filter" role="tablist">
-      <button
-        role="tab"
-        aria-selected={selected === null}
-        className={`category-button ${selected === null ? "active" : ""}`}
-        onClick={() => handleCategoryClick(null)}
-      >
-        Todos
-      </button>
-
-      {categories.map((cat) => (
-        <button
-          key={cat.id}
-          role="tab"
-          aria-selected={selected === cat.id}
-          className={`category-button ${selected === cat.id ? "active" : ""}`}
-          onClick={() => handleCategoryClick(cat.id)}
+    <div className="categories-grid">
+      {categories.map((category) => (
+        <Link
+          to={`/products?category=${category._id}`}
+          key={category._id}
+          className="category-card"
+          aria-label={`Ver productos de ${category.name}`}
         >
-          {cat.name}
-        </button>
+          <div
+            className="category-image"
+            style={{
+              backgroundImage: `url(${category.image || '/placeholders/category.jpg'})`,
+            }}
+          />
+          <h3 className="category-name">{category.name}</h3>
+        </Link>
       ))}
     </div>
   );

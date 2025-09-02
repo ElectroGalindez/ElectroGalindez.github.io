@@ -1,15 +1,22 @@
-// src/components/AdminLayout.jsx
-import { Outlet } from "react-router-dom";
-import AdminSidebar from "../../components/AdminSidebar";
-import "../../styles/AdminLayout.css";
+// src/pages/admin/AdminLayout.jsx
+import React from 'react';
+import { Outlet } from 'react-router-dom';
+import AdminSidebar from './AdminSidebar';
+import '../../styles/AdminLayout.css';
+import DashboardHome from './DashboardHome';
 
 function AdminLayout() {
   return (
     <div className="admin-layout">
+      {/* Sidebar fija */}
       <AdminSidebar />
-      <main className="admin-content" role="main">
-        <Outlet />
-      </main>
+
+      {/* Contenido principal */}
+      <div className="admin-main">
+        <main className="admin-content">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }

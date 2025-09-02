@@ -1,4 +1,17 @@
-/* PublicLayout.css */
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f8f4eb;
+  color: var(--text);
+  transition: background 0.3s ease, color 0.3s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.app-main {
+  flex: 1;
+  padding: 2rem 0;
+}
 :root {
   --bg: #ffffff;
   --text: #1a1a1a;
@@ -18,7 +31,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--bg);
+  background: #f8f4eb;
   color: var(--text);
   font-family: var(--font);
   transition: var(--transition);
@@ -31,14 +44,14 @@
   margin: 0 auto;
   width: 100%;
   max-width: var(--max-width);
-  padding: 0 1.5rem;
+  padding: 0 0rem;
 }
 
 /* Asegurar que no haya scroll en el body si el Navbar lo maneja */
 body {
   margin: 0;
   padding: 0;
-  background: var(--bg);
+  background: #f8f4eb;
   color: var(--text);
   font-family: var(--font);
   line-height: 1.6;

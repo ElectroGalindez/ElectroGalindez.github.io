@@ -8,7 +8,6 @@ import '../styles/PublicLayout.css';
 export default function PublicLayout() {
   const [theme, setTheme] = useState('light');
 
-  // Cargar tema desde localStorage o preferencia del sistema
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -18,7 +17,6 @@ export default function PublicLayout() {
     document.documentElement.setAttribute('data-theme', initialTheme);
   }, []);
 
-  // Escuchar cambios de tema (puedes usar un Context si lo prefieres)
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);

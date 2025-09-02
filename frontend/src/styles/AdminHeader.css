@@ -1,0 +1,45 @@
+/* src/styles/AdminHeader.css */
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 1.5rem;
+  height: 60px;
+  background: #f8f4eb;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+}
+
+.header-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--primary);
+}
+
+.admin-profile {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.95rem;
+}
+
+.admin-name {
+  font-weight: 500;
+}
+
+.logout-btn {
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  transition: color 0.2s ease;
+  padding: 0.5rem;
+  border-radius: 8px;
+}
+
+.logout-btn:hover {
+  color: #d32f2f;
+  background: rgba(211, 47, 47, 0.1);
+}
