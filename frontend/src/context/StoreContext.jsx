@@ -20,9 +20,31 @@ export const StoreProvider = ({ children }) => {
     featured: false
   });
   const [error, setError] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState(null); // ✅ Estado añadido
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [wishlist, setWishlist] = useState([]); // ✅ Wishlist
 
   const API_BASE = 'http://localhost:3001/api';
+
+  // ✅ Persistencia: cargar wishlist desde localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('wishlist');
+      if (saved) {
+        setWishlist(JSON.parse(saved));
+      }
+    } catch (e) {
+      console.warn('No se pudo cargar la lista de deseos de localStorage');
+    }
+  }, []);
+
+  // ✅ Persistencia: guardar en localStorage cuando cambia
+  useEffect(() => {
+    try {
+      localStorage.setItem('wishlist', JSON.stringify(wishlist));
+    } catch (e) {
+      console.warn('No se pudo guardar la lista de deseos en localStorage');
+    }
+  }, [wishlist]);
 
   const fetchWithAuth = async (endpoint) => {
     try {
@@ -109,6 +131,24 @@ export const StoreProvider = ({ children }) => {
     setSelectedCategory(categoryId);
   }, [products, clearFilter]);
 
+  // ✅ Wishlist: Añadir producto
+  const addToWishlist = useCallback((product) => {
+    setWishlist(prev => {
+      if (prev.some(p => p._id === product._id)) return prev;
+      return [...prev, product];
+    });
+  }, []);
+
+  // ✅ Wishlist: Eliminar producto
+  const removeFromWishlist = useCallback((productId) => {
+    setWishlist(prev => prev.filter(p => p._id !== productId));
+  }, []);
+
+  // ✅ Wishlist: Verificar si un producto está en la lista
+  const isProductInWishlist = useCallback((productId) => {
+    return wishlist.some(p => p._id === productId);
+  }, [wishlist]);
+
   // ✅ Carga inicial
   useEffect(() => {
     fetchProducts();
@@ -117,19 +157,31 @@ export const StoreProvider = ({ children }) => {
   }, []);
 
   const value = {
+    // Datos
     products,
     categories,
     featured,
     filteredProducts,
+    wishlist, // ✅ Expuesta
+
+    // Estado
     loading,
     error,
-    selectedCategory, // ✅ Expuesto
+    selectedCategory,
+
+    // Funciones
     refreshProducts: fetchProducts,
     refreshCategories: fetchCategories,
     refreshFeatured: fetchFeatured,
     filterByCategory,
     clearFilter,
-    getProductById: (id) => [...products, ...featured].find(p => p._id === id)
+    getProductById: (id) => [...products, ...featured].find(p => p._id === id),
+
+    // Wishlist
+    wishlist,
+    addToWishlist,
+    removeFromWishlist,
+    isProductInWishlist,
   };
 
   return (

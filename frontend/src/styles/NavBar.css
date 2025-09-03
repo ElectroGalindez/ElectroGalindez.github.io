@@ -266,3 +266,30 @@
     right: -6px;
   }
 }
+/* Botón de favoritos */
+.navbar-actions .favorites {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #636366;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.navbar-actions .favorites:hover {
+  color: #e74c3c;
+}
+
+.navbar-actions .favorites span {
+  font-size: 0.9rem;
+}
+
+/* Responsive: ocultar texto en móviles */
+@media (max-width: 480px) {
+  .navbar-actions .favorites span,
+  .navbar-actions .auth span,
+  .navbar-actions .contact-link span {
+    display: none;
+  }
+}

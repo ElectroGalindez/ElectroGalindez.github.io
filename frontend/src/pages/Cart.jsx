@@ -3,16 +3,19 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import '../styles/Cart.css';
 
 function Cart() {
   const { cart, clearCart, getTotal } = useCart();
-  const { formatPrice } = useApp(); 
+  const { formatPrice } = useApp();
+  const { requireAuthForPurchase } = useAuth(); // ✅ Usa la validación
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const total = getTotal();
 
+  // ✅ Solo muestra el carrito si hay productos
   if (cart.length === 0) {
     return (
       <div className="cart-container empty">
@@ -58,7 +61,14 @@ function Cart() {
           <button onClick={() => navigate('/products')} className="btn-continue">
             ← Seguir comprando
           </button>
-          <button onClick={() => navigate('/checkout')} className="btn-whatsapp">
+          <button
+            onClick={() => {
+              requireAuthForPurchase(() => {
+                navigate('/checkout');
+              });
+            }}
+            className="btn-whatsapp"
+          >
             🛒 Ir a finalizar compra
           </button>
         </div>

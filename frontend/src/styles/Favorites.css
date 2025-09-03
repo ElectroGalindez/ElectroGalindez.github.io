@@ -1,9 +1,28 @@
-/* src/styles/ProductCard.css */
+/* src/styles/Favorites.css */
 
-.product-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
+.favorites-page {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 1rem;
+  font-family: var(--font-sans);
+}
+
+.favorites-page h1 {
+  text-align: center;
+  color: #1d1d1f;
+  margin-bottom: 2rem;
+  font-size: 1.8rem;
+}
+
+.favorites-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+/* Reutiliza el estilo del ProductCard */
+.favorites-grid .product-card {
   background: white;
   border: 1px solid #e5e5e7;
   border-radius: 12px;
@@ -12,22 +31,19 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.product-card:hover {
+.favorites-grid .product-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
-/* Enlace principal */
-.product-card-link {
+.favorites-grid .product-card-link {
   text-decoration: none;
   color: inherit;
   display: flex;
   flex-direction: column;
-  flex: 1;
 }
 
-/* Contenedor de imagen */
-.product-image-container {
+.favorites-grid .product-image-container {
   position: relative;
   width: 100%;
   height: 200px;
@@ -35,19 +51,18 @@
   overflow: hidden;
 }
 
-.product-image {
+.favorites-grid .product-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
   transition: transform 0.4s ease;
 }
 
-.product-card:hover .product-image {
+.favorites-grid .product-card:hover .product-image {
   transform: scale(1.05);
 }
 
-/* Badge */
-.badge {
+.favorites-grid .badge {
   position: absolute;
   top: 0.75rem;
   left: 0.75rem;
@@ -60,13 +75,12 @@
   z-index: 1;
 }
 
-/* Botón de favoritos */
-.wishlist-button {
+.favorites-grid .wishlist-button {
   position: absolute;
   top: 0.75rem;
   right: 0.75rem;
   background: white;
-  border: 2px solid #ccc;
+  border: 2px solid #e74c3c;
   border-radius: 50%;
   width: 40px;
   height: 40px;
@@ -78,53 +92,49 @@
   z-index: 2;
 }
 
-.wishlist-button:hover,
-.wishlist-button:focus {
-  border-color: #0066cc;
-  background: #f0f0f0;
+.favorites-grid .wishlist-button:hover,
+.favorites-grid .wishlist-button:focus {
+  background: #f8f8f8;
   transform: scale(1.1);
 }
 
-.wishlist-button.in-wishlist {
-  border-color: #e74c3c;
+.favorites-grid .wishlist-button svg {
+  font-size: 1.2rem;
   color: #e74c3c;
 }
 
-.wishlist-button svg {
-  font-size: 1.2rem;
-}
-
-/* Información */
-.product-info {
+.favorites-grid .product-info {
   padding: 1rem;
   flex: 1;
   display: flex;
   flex-direction: column;
 }
 
-.product-name {
+.favorites-grid .product-name {
   font-size: 1.1rem;
   font-weight: 600;
   color: #1d1d1f;
   margin: 0 0 0.5rem;
   line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.product-category {
+.favorites-grid .product-category {
   font-size: 0.9rem;
   color: #636366;
   margin: 0 0 0.5rem;
 }
 
-.product-price {
+.favorites-grid .product-price {
   font-size: 1.25rem;
   font-weight: 600;
   color: #0066cc;
   margin: 0.5rem 0 0;
 }
 
-/* Acciones (botones) */
-.product-actions {
+.favorites-grid .product-actions {
   position: absolute;
   bottom: 0;
   left: 0;
@@ -138,12 +148,12 @@
   background: linear-gradient(to top, rgba(255, 255, 255, 0.9), transparent);
 }
 
-.product-actions.visible {
+.favorites-grid .product-card:hover .product-actions {
   opacity: 1;
   visibility: visible;
 }
 
-.btn {
+.favorites-grid .btn {
   flex: 1;
   display: flex;
   align-items: center;
@@ -159,50 +169,90 @@
   font-size: 0.95rem;
 }
 
-.btn-outline {
+.favorites-grid .btn-outline {
   background: white;
   color: #0066cc;
   border: 2px solid #0066cc;
 }
 
-.btn-outline:hover {
+.favorites-grid .btn-outline:hover {
   background: #0066cc;
   color: white;
 }
 
-.btn-primary {
+.favorites-grid .btn-primary {
   background: #0066cc;
   color: white;
 }
 
-.btn-primary:hover {
+.favorites-grid .btn-primary:hover {
   background: #0055aa;
   transform: translateY(-1px);
 }
 
-.btn svg {
+.favorites-grid .btn svg {
   font-size: 1rem;
+}
+
+/* Estado vacío */
+.favorites-empty {
+  text-align: center;
+  padding: 4rem 1rem;
+  color: #636366;
+}
+
+.favorites-empty h2 {
+  margin: 1rem 0;
+  font-size: 1.5rem;
+  color: #1d1d1f;
+}
+
+.favorites-empty p {
+  margin: 0 0 1.5rem;
+  font-size: 1rem;
+}
+
+.btn-browse {
+  padding: 0.75rem 1.5rem;
+  background: #0066cc;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.btn-browse:hover {
+  background: #0055aa;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .product-card {
-    border-radius: 10px;
+  .favorites-page {
+    padding: 1rem;
   }
-  .product-image-container {
+  .favorites-page h1 {
+    font-size: 1.5rem;
+  }
+  .favorites-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+  }
+  .favorites-grid .product-image-container {
     height: 180px;
   }
-  .product-name {
+  .favorites-grid .product-name {
     font-size: 1rem;
   }
-  .product-price {
+  .favorites-grid .product-price {
     font-size: 1.1rem;
   }
-  .wishlist-button {
+  .favorites-grid .wishlist-button {
     width: 36px;
     height: 36px;
   }
-  .wishlist-button svg {
+  .favorites-grid .wishlist-button svg {
     font-size: 1rem;
   }
 }

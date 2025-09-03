@@ -2,191 +2,144 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import { useAuth } from '../context/AuthContext';
+import { useApp } from '../context/AppContext';
 import '../styles/Checkout.css';
 
 function Checkout() {
-  const { cart, clearCart, getTotal } = useCart();
-  const { user } = useAuth();
+  const { cart, getTotal } = useCart();
+  const { formatPrice } = useApp();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    name: user?.name || '',
+    name: '',
     phone: '',
     address: '',
     notes: ''
   });
-  const [errors, setErrors] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: null }));
-    }
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = 'Nombre requerido';
-    if (!formData.phone.trim()) newErrors.phone = 'Teléfono requerido';
-    if (!formData.address.trim()) newErrors.address = 'Dirección requerida';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    const { name, phone, address } = formData;
+    
+    if (!name || !phone || !address) {
+      alert('Por favor, completa todos los campos obligatorios.');
+      return;
+    }
 
-    setIsSubmitting(true);
-
-    // Generar mensaje de WhatsApp
+    // Generar mensaje para WhatsApp
     const total = getTotal();
-    const items = cart.map(item => 
-      `• ${item.name} × ${item.quantity} → ${new Intl.NumberFormat('es-CU', {
-        style: 'currency',
-        currency: 'CUP'
-      }).format(item.price * item.quantity)}`
-    ).join('\n');
+    const productLines = cart.map(item => 
+      `${item.name} × ${item.quantity} (${formatPrice(item.price)} c/u) = ${formatPrice(item.price * item.quantity)}`
+    ).join('\n• ');
 
-    const message = encodeURIComponent(
-      `Hola, quiero hacer una compra en ElectroGalíndez:\n\n${items}\n\n` +
-      `Total: ${new Intl.NumberFormat('es-CU', {
-        style: 'currency',
-        currency: 'CUP'
-      }).format(total)}\n\n` +
-      `Datos de contacto:\n` +
-      `Nombre: ${formData.name}\n` +
-      `Teléfono: ${formData.phone}\n` +
-      `Dirección: ${formData.address}\n` +
-      `${formData.notes ? `Notas: ${formData.notes}` : ''}\n\n` +
-      `Por favor, confírmenme disponibilidad y coordinemos entrega.`
-    );
+    const message = encodeURIComponent(`
+*Pedido desde ElectroGalíndez*
+
+*Cliente:* ${name}
+*Teléfono:* ${phone}
+*Dirección:* ${address}
+${formData.notes ? '*Notas:* ' + formData.notes : ''}
+
+*Detalles del pedido:*
+• ${productLines}
+
+*Total:* ${formatPrice(total)}
+
+¡Hola! Quiero confirmar este pedido.
+    `.trim());
 
     const whatsappUrl = `https://wa.me/5358956749?text=${message}`;
     window.open(whatsappUrl, '_blank');
-
-    // Vaciar carrito y redirigir
-    clearCart();
-    setIsSubmitting(false);
-    navigate('/thank-you');
   };
 
-  const total = getTotal();
-
-  if (cart.length === 0) {
-    return (
-      <div className="checkout empty">
-        <p>Tu carrito está vacío</p>
-        <button onClick={() => navigate('/products')} className="btn-primary">
-          ← Volver a productos
-        </button>
-      </div>
-    );
-  }
-
   return (
-    <div className="checkout">
-      <h1>Finalizar Compra</h1>
-      <p className="checkout-subtitle">Completa tus datos para coordinar la entrega</p>
+    <div className="checkout-container">
+      <h2>Finalizar Compra</h2>
 
-      <div className="checkout-grid">
-        {/* Resumen del pedido */}
-        <div className="order-summary">
-          <h2>Resumen del Pedido</h2>
-          <div className="summary-items">
-            {cart.map(item => (
-              <div key={item.id} className="summary-item">
-                <img src={item.image || '/placeholders/product.png'} alt={item.name} />
-                <div className="item-info">
-                  <strong>{item.name}</strong>
-                  <span>{item.quantity} × {new Intl.NumberFormat('es-CU', {
-                    style: 'currency',
-                    currency: 'CUP'
-                  }).format(item.price)}</span>
-                </div>
-                <div className="item-total">
-                  {new Intl.NumberFormat('es-CU', {
-                    style: 'currency',
-                    currency: 'CUP'
-                  }).format(item.price * item.quantity)}
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="summary-total">
-            <strong>Total:</strong>
-            <span>{new Intl.NumberFormat('es-CU', {
-              style: 'currency',
-              currency: 'CUP'
-            }).format(total)}</span>
-          </div>
-        </div>
-
-        {/* Formulario */}
-        <div className="checkout-form">
-          <h2>Tus Datos</h2>
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label>Nombre *</label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="Tu nombre completo"
-              />
-              {errors.name && <span className="error">{errors.name}</span>}
-            </div>
-
-            <div className="form-group">
-              <label>Teléfono *</label>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                placeholder="Ej: 55512345"
-              />
-              {errors.phone && <span className="error">{errors.phone}</span>}
-            </div>
-
-            <div className="form-group">
-              <label>Dirección de entrega *</label>
-              <textarea
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                placeholder="Ej: Calle 123, entre 5 y 7, Vedado"
-                rows="3"
-              ></textarea>
-              {errors.address && <span className="error">{errors.address}</span>}
-            </div>
-
-            <div className="form-group">
-              <label>Notas (opcional)</label>
-              <textarea
-                name="notes"
-                value={formData.notes}
-                onChange={handleChange}
-                placeholder="Ej: Entregar después de las 5 PM"
-                rows="2"
-              ></textarea>
-            </div>
-
-            <div className="form-actions">
-              <button type="button" onClick={() => navigate(-1)} className="btn-secondary">
-                ← Volver
-              </button>
-              <button type="submit" className="btn-primary" disabled={isSubmitting}>
-                {isSubmitting ? 'Enviando...' : '✅ Enviar pedido por WhatsApp'}
-              </button>
-            </div>
-          </form>
+      <div className="checkout-cart">
+        <h3>Tu Pedido</h3>
+        <ul className="cart-list">
+          {cart.map(item => (
+            <li key={item.id} className="cart-item">
+              <span>{item.name}</span>
+              <span>x{item.quantity}</span>
+              <span>{formatPrice(item.price * item.quantity)}</span>
+            </li>
+          ))}
+        </ul>
+        <div className="cart-total">
+          <strong>Total:</strong>
+          <span>{formatPrice(getTotal())}</span>
         </div>
       </div>
+
+      <form onSubmit={handleSubmit} className="checkout-form">
+        <h3>Datos de Contacto</h3>
+
+        <div className="form-group">
+          <label htmlFor="name">Nombre completo *</label>
+          <input
+            type="text"
+            id="name"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="phone">Teléfono (WhatsApp) *</label>
+          <input
+            type="tel"
+            id="phone"
+            name="phone"
+            value={formData.phone}
+            onChange={handleChange}
+            placeholder="555444333"
+            required
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="address">Dirección de entrega *</label>
+          <textarea
+            id="address"
+            name="address"
+            value={formData.address}
+            onChange={handleChange}
+            rows="3"
+            placeholder="Calle, número, barrio, ciudad"
+            required
+          ></textarea>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="notes">Notas (opcional)</label>
+          <textarea
+            id="notes"
+            name="notes"
+            value={formData.notes}
+            onChange={handleChange}
+            rows="2"
+            placeholder="Ej: horario de entrega, referencia, etc."
+          ></textarea>
+        </div>
+
+        <div className="checkout-actions">
+          <button type="button" onClick={() => navigate(-1)} className="btn-back">
+            ← Volver al carrito
+          </button>
+          <button type="submit" className="btn-confirm">
+            💬 Enviar pedido por WhatsApp
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

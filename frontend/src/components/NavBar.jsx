@@ -4,13 +4,15 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useApp } from '../context/AppContext';
-import { FaUserCircle, FaUserShield, FaSearch, FaShoppingCart, FaPhoneAlt } from 'react-icons/fa';
+import { useStore } from '../context/StoreContext'; // ✅ Importa useStore
+import { FaUserCircle, FaUserShield, FaSearch, FaShoppingCart, FaHeart, FaPhoneAlt } from 'react-icons/fa';
 import SearchBar from './SearchBar';
 import '../styles/Navbar.css';
 
 function Navbar() {
   const { cart } = useCart();
   const { user } = useAuth();
+  const { wishlist } = useStore(); // ✅ Obtiene la lista de deseos
   const { language, setLanguage, currency, setCurrency, t } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
@@ -30,6 +32,11 @@ function Navbar() {
     [cart]
   );
 
+  const totalWishlist = useMemo(
+    () => wishlist.length,
+    [wishlist]
+  );
+
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener('scroll', handleScroll);
@@ -40,7 +47,6 @@ function Navbar() {
 
   const navLinks = useMemo(() => [
     { to: '/products', label: t('allProducts') },
-    // { to: '/products', label: t('newArrivals') },
     { to: '/products/featured', label: t('offers') },
     { to: '/help', label: t('help') },
     { to: '/about', label: t('aboutUs') },
@@ -119,6 +125,18 @@ function Navbar() {
                 <FaUserCircle size={isCompact ? 16 : 18} />
               )}
               {!isCompact && <span>{user ? 'Perfil' : 'Iniciar sesión'}</span>}
+            </Link>
+
+            {/* Favoritos */}
+            <Link
+              to="/favorites"
+              className="navbar-link favorites"
+              aria-label={`Favoritos (${totalWishlist})`}
+            >
+              <FaHeart size={isCompact ? 16 : 18} color={totalWishlist > 0 ? "#e74c3c" : "#636366"} />
+              {totalWishlist > 0 && (
+                <span className="cart-badge">{totalWishlist}</span>
+              )}
             </Link>
 
             {/* Carrito */}

@@ -8,10 +8,14 @@ import Home from "./pages/Home";
 import ProductList from "./pages/ProductList";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
 import OrderSuccess from "./pages/OrderSuccess";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
+import Favorites from "./pages/Favorites";
+import Offers from "./pages/Offers";
+
 import ErrorBoundary from './components/ErrorBoundary';
 
 import About from "./pages/About";
@@ -40,6 +44,7 @@ function App() {
           <Route path="products" element={<ProductList />} />
           <Route path="products/:id" element={<ProductDetail />} />
           <Route path="cart" element={<Cart />} />
+          <Route path="checkout" element={<Checkout />} />
           <Route path="success" element={<OrderSuccess />} />
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
@@ -49,6 +54,8 @@ function App() {
           <Route path="contact" element={<Contact />} />
           <Route path="terms" element={<Terms />} />
           <Route path="privacy" element={<Privacy />} />
+          <Route path="favorites" element={<Favorites />} />
+          <Route path="/products/featured" element={<Offers />} />
         </Route>
 
         <Route

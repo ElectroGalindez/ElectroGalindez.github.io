@@ -78,13 +78,29 @@ export function AuthProvider({ children }) {
     return localStorage.getItem("token");
   }, []);
 
+  // ✅ Verifica si el usuario puede comprar
+  const requireAuthForPurchase = useCallback((onAuthorized) => {
+    if (user) {
+      onAuthorized();
+    } else {
+      const confirmed = window.confirm(
+        'Debes iniciar sesión para agregar productos al carrito.\n\n¿Quieres ir a iniciar sesión?'
+      );
+      if (confirmed) {
+        window.location.href = '/login';
+      }
+    }
+  }, [user]);
+
   const value = {
     user,
     login,
     logout,
     getToken,
     isAuthenticated: !!user,
-    loading
+    loading,
+    // ✅ Nueva función para compras
+    requireAuthForPurchase
   };
 
   return (

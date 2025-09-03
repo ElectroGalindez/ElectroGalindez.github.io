@@ -14,27 +14,25 @@ export const useCart = () => {
 export function CartProvider({ children }) {
   const [cart, setCart] = useState([]);
 
-  // Cargar carrito desde localStorage al iniciar
+  // Cargar carrito desde localStorage
   useEffect(() => {
     try {
       const savedCart = localStorage.getItem("cart");
       if (savedCart) {
         const parsed = JSON.parse(savedCart);
-        // Validar que sea un array y los productos tengan estructura mínima
         if (Array.isArray(parsed)) {
           setCart(parsed);
         } else {
           setCart([]);
-          localStorage.removeItem("cart");
         }
       }
     } catch (error) {
-      console.error("Error al cargar el carrito desde localStorage:", error);
+      console.error("Error al cargar el carrito:", error);
       setCart([]);
     }
   }, []);
 
-  // Guardar en localStorage cada vez que el carrito cambie
+  // Guardar en localStorage
   useEffect(() => {
     try {
       localStorage.setItem("cart", JSON.stringify(cart));
@@ -45,16 +43,15 @@ export function CartProvider({ children }) {
 
   // Añadir producto al carrito
   const addToCart = useCallback((product) => {
-    if (!product?.id || product.price == null) {
-      console.error("Producto inválido:", product);
+    if (!product?._id || product.price == null) {
+      console.error("Producto inválido para el carrito:", product);
       return;
     }
 
-    setCart((prevCart) => {
-      const existingIndex = prevCart.findIndex(item => item.id === product.id);
+    setCart(prevCart => {
+      const existingIndex = prevCart.findIndex(item => item.id === product._id);
 
       if (existingIndex > -1) {
-        // Producto ya existe: aumentar cantidad
         const updated = [...prevCart];
         updated[existingIndex] = {
           ...updated[existingIndex],
@@ -62,14 +59,13 @@ export function CartProvider({ children }) {
         };
         return updated;
       } else {
-        // Nuevo producto
         return [
           ...prevCart,
           {
-            id: product.id,
+            id: product._id,
             name: product.name,
             price: product.price,
-            image: product.image,
+            image: product.images?.[0] || '/placeholders/product.png',
             quantity: 1
           }
         ];
@@ -79,21 +75,17 @@ export function CartProvider({ children }) {
 
   // Eliminar producto
   const removeFromCart = useCallback((productId) => {
-    setCart(prevCart => 
-      prevCart.filter(item => item.id !== productId)
-    );
+    setCart(prevCart => prevCart.filter(item => item.id !== productId));
   }, []);
 
   // Actualizar cantidad
   const updateQuantity = useCallback((productId, quantity) => {
     setCart(prevCart => {
-      const updated = prevCart.map(item => 
-        item.id === productId 
+      const updated = prevCart.map(item =>
+        item.id === productId
           ? { ...item, quantity: Math.max(1, quantity) }
           : item
       );
-
-      // Si la cantidad es 0 o menos, se elimina
       return updated.filter(item => item.quantity > 0);
     });
   }, []);
@@ -113,22 +105,20 @@ export function CartProvider({ children }) {
     return cart.reduce((sum, item) => sum + item.quantity, 0);
   }, [cart]);
 
-  // Verificar si el carrito está vacío
+  // Verificar si está vacío
   const isEmpty = cart.length === 0;
 
   return (
-    <CartContext.Provider
-      value={{
-        cart,
-        addToCart,
-        removeFromCart,
-        updateQuantity,
-        clearCart,
-        getTotal,
-        getTotalItems,
-        isEmpty
-      }}
-    >
+    <CartContext.Provider value={{
+      cart,
+      addToCart,
+      removeFromCart,
+      updateQuantity,
+      clearCart,
+      getTotal,
+      getTotalItems,
+      isEmpty
+    }}>
       {children}
     </CartContext.Provider>
   );

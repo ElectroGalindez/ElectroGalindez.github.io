@@ -1,0 +1,182 @@
+/* src/styles/Offers.css */
+
+.offers-page {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 1rem;
+  font-family: var(--font-sans);
+}
+
+.offers-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #1d1d1f;
+}
+
+.offers-header h1 {
+  font-size: 2rem;
+  margin: 0 0 0.5rem;
+}
+
+.offers-header p {
+  font-size: 1.1rem;
+  color: #636366;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+/* Grid de productos */
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+/* Reutiliza el estilo de ProductCard */
+.products-grid .product-card {
+  background: white;
+  border: 1px solid #e5e5e7;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.products-grid .product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.products-grid .product-image-container {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  background: #f8f8f8;
+  overflow: hidden;
+}
+
+.products-grid .product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.products-grid .product-card:hover .product-image {
+  transform: scale(1.05);
+}
+
+/* Badge de destacado */
+.products-grid .badge.featured {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  background: #ffcc00;
+  color: #333;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  z-index: 1;
+}
+
+/* Skeleton loading */
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.skeleton-card {
+  background: white;
+  border: 1px solid #e5e5e7;
+  border-radius: 12px;
+  overflow: hidden;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.skeleton-image {
+  width: 100%;
+  height: 200px;
+  background: #f0f0f0;
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+}
+
+.skeleton-text {
+  height: 12px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.skeleton-text.name {
+  width: 80%;
+}
+
+.skeleton-text.category {
+  width: 60%;
+}
+
+.skeleton-text.price {
+  width: 40%;
+  margin-top: 0.5rem;
+}
+
+.skeleton-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.skeleton-btn {
+  height: 36px;
+  border-radius: 8px;
+  background: #e0e0e0;
+}
+
+.skeleton-btn.outline {
+  width: 100%;
+}
+
+.skeleton-btn.primary {
+  flex: 1;
+}
+
+/* Mensaje de error o vacío */
+.error-banner,
+.no-products {
+  text-align: center;
+  padding: 2rem;
+  color: #d32f2f;
+  background: #ffebee;
+  border-radius: 12px;
+  margin: 1rem 0;
+}
+
+.no-products {
+  background: white;
+  color: #636366;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .offers-page {
+    padding: 1rem;
+  }
+  .offers-header h1 {
+    font-size: 1.8rem;
+  }
+  .products-grid,
+  .skeleton-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+  }
+  .products-grid .product-image-container,
+  .skeleton-image {
+    height: 180px;
+  }
+}
