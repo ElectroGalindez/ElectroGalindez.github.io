@@ -2,6 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useStore } from '../context/StoreContext';
+import '../styles/CategoryCarousel.css';
 
 function CategoryCarousel() {
   const { categories, filterByCategory } = useStore();
@@ -16,13 +17,17 @@ function CategoryCarousel() {
           className="category-item"
           aria-label={`Ver productos de ${category.name}`}
         >
-          <img
-            src={category.image || '/placeholders/category.png'}
-            alt={category.name}
-            loading="lazy"
-            onError={(e) => (e.target.src = '/placeholders/fallback.png')}
-          />
-          <span>{category.name}</span>
+          <div className="category-img-wrapper">
+            <img
+              src={category.image || '/placeholders/category.png'}
+              alt={category.name}
+              loading="lazy"
+              onError={(e) => {
+                e.target.src = '/placeholders/fallback.png';
+              }}
+            />
+          </div>
+          <span className="category-name">{category.name}</span>
         </Link>
       ))}
     </div>

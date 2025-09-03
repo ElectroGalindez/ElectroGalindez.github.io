@@ -1,13 +1,11 @@
 /* src/styles/global.css */
 
-/* Variables de diseño (ajustadas a ElectroGalíndez) */
+/* Variables de diseño (ElectroGalíndez) */
 :root {
-  /* Tipografía */
-  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
   --font-mono: 'Courier New', monospace;
 
   /* Escala tipográfica */
-  --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
   --text-lg: 1.125rem;
@@ -18,7 +16,6 @@
   --text-5xl: 3rem;
 
   /* Espaciado */
-  --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
   --space-4: 1rem;
@@ -26,12 +23,12 @@
   --space-8: 2rem;
 
   /* Radios */
-  --radius-sm: 6px;
   --radius: 12px;
-  --radius-lg: 16px;
+  --radius-lg: 20px;
+  --radius-pill: 50px;
 
   /* Sombra */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
   --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   --shadow-md: 0 8px 15px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 16px 30px rgba(0, 0, 0, 0.15);
@@ -39,7 +36,7 @@
   /* Transiciones */
   --transition: all 0.2s ease;
 
-  /* Colores base */
+  /* Colores */
   --bg: #242424;
   --bg-alt: #1c1c1e;
   --text: #f8f4eb;
@@ -47,168 +44,16 @@
   --border-color: #424245;
   --primary: #0066cc;
   --primary-hover: #0055aa;
-  --success: #28a745;
-  --warning: #ffc107;
-  --danger: #dc3545;
+  --whatsapp: #25D366;
 }
 
-/* Modo claro (opcional, puedes activarlo con una clase o prefers-color-scheme) */
+/* Modo claro */
 @media (prefers-color-scheme: light) {
   :root {
-    --bg: #f8f4eb;
+    --bg: #fafafa;
     --bg-alt: #ffffff;
     --text: #1d1d1f;
     --text-secondary: #636366;
-    --border-color: #d1d1d6;
-    --primary: #0066cc;
-    --primary-hover: #0055aa;
-  }
-}
-
-/* Reset básico */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-/* Body */
-body {
-  font-family: var(--font-sans);
-  line-height: 1.6;
-  color: var(--text);
-  background: var(--bg);
-  min-height: 100vh;
-  font-weight: 400;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-  font-synthesis: none;
-}
-
-/* Enlaces */
-a {
-  color: var(--primary);
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
-
-a:hover {
-  color: var(--primary-hover);
-}
-
-/* Botones */
-button,
-.btn {
-  font-family: var(--font-sans);
-  font-size: var(--text-base);
-  font-weight: 500;
-  padding: 0.6em 1.2em;
-  border: 1px solid transparent;
-  border-radius: var(--radius);
-  background-color: var(--bg-alt);
-  color: var(--text);
-  cursor: pointer;
-  transition: var(--transition);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-button:hover,
-.btn:hover {
-  border-color: var(--primary);
-  background-color: var(--primary);
-  color: white;
-  transform: translateY(-1px);
-  box-shadow: var(--shadow);
-}
-
-button:focus,
-button:focus-visible,
-.btn:focus,
-.btn:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
-}
-
-/* Títulos */
-h1, h2, h3, h4, h5, h6 {
-  color: var(--text);
-  font-weight: 600;
-  line-height: 1.2;
-  margin: 0 0 var(--space-4) 0;
-}
-
-h1 {
-  font-size: var(--text-5xl);
-}
-
-h2 {
-  font-size: var(--text-4xl);
-}
-
-h3 {
-  font-size: var(--text-3xl);
-}
-
-h4 {
-  font-size: var(--text-2xl);
-}
-
-h5 {
-  font-size: var(--text-xl);
-}
-
-p {
-  margin: 0 0 var(--space-4) 0;
-  line-height: 1.6;
-}
-
-/* Contenedor fluido */
-.container {
-  width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 var(--space-4);
-}
-
-/* Grid responsivo */
-.grid {
-  display: grid;
-  gap: var(--space-6);
-}
-
-/* Responsive: Ajuste para pantallas pequeñas */
-@media (max-width: 768px) {
-  :root {
-    --text-5xl: 2.25rem;
-    --text-4xl: 1.875rem;
-    --text-3xl: 1.5rem;
-    --text-2xl: 1.25rem;
-  }
-
-  .container {
-    padding: 0 var(--space-3);
-  }
-}
-
-/* Responsive: Muy pequeño (móviles de 320px) */
-@media (max-width: 480px) {
-  :root {
-    --space-4: 0.75rem;
-    --space-6: 1rem;
-    --space-8: 1.25rem;
-  }
-
-  h1 {
-    font-size: 2rem;
-  }
-
-  .container {
-    padding: 0 var(--space-2);
+    --border-color: #e5e5e7;
   }
 }

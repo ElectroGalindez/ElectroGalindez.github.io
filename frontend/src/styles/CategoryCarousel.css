@@ -1,29 +1,23 @@
 /* src/styles/CategoryCarousel.css */
 
-/* Contenedor del carrusel */
+/* Carrusel de categorías */
 .category-carousel {
   display: flex;
-  gap: 1rem;
-  padding: 1rem 0;
+  gap: 1.25rem;
+  padding: 1.25rem 0;
   overflow-x: auto;
   scroll-behavior: smooth;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE/Edge */
   scroll-padding: 1rem;
   margin: 0 1rem;
-  position: relative;
-  -webkit-overflow-scrolling: touch; /* Suaviza scroll en iOS */
+  -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
 }
 
-/* Ocultar scrollbar en Chrome, Safari, Edge */
+/* Ocultar scrollbar en Chrome/Safari */
 .category-carousel::-webkit-scrollbar {
   display: none;
-}
-
-/* Asegura que los elementos no se rompan en nuevas líneas */
-.category-carousel {
-  -webkit-tap-highlight-color: transparent;
 }
 
 /* Elemento de categoría */
@@ -38,13 +32,12 @@
   background: white;
   border: 1px solid #e5e5e7;
   border-radius: 12px;
-  min-width: 90px;
+  min-width: 100px;
   text-align: center;
   cursor: pointer;
   transition: all 0.2s ease;
   text-decoration: none;
   color: #1d1d1f;
-  border: 1px solid #e5e5e7;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
@@ -58,35 +51,35 @@
   border-color: #0066cc;
 }
 
-/* Estado activo (opcional) */
-.category-item.active {
-  background: #0066cc;
-  color: white;
-  border-color: #0055aa;
-}
-
-.category-item.active span {
-  color: white;
-}
-
-/* Imagen del ícono */
-.category-item img {
+/* Contenedor de imagen (círculo) */
+.category-img-wrapper {
   width: 50px;
   height: 50px;
-  object-fit: cover;
-  border-radius: 50%;
+  overflow: hidden;
   border: 2px solid #0066cc;
-  transition: transform 0.2s ease;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f0f0;
+  transition: all 0.2s ease;
 }
 
-.category-item:hover img,
-.category-item:focus img {
-  transform: scale(1.05);
+.category-item:hover .category-img-wrapper {
   border-color: #0055aa;
+  transform: scale(1.05);
 }
 
-/* Texto de la categoría */
-.category-item span {
+/* Imagen dentro del círculo */
+.category-img-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Nombre de la categoría */
+.category-name {
   font-size: 0.9rem;
   color: #1d1d1f;
   font-weight: 500;
@@ -94,56 +87,30 @@
   white-space: nowrap;
 }
 
-.category-item img {
-  width: 50px;
-  height: 50px;
-  object-fit: cover;
-  border-radius: 50%;
-  border: 2px solid #0066cc;
-}
-
-/* Responsive: Móviles pequeños (320px - 480px) */
+/* Responsive: Móviles pequeños */
 @media (max-width: 480px) {
   .category-carousel {
-    gap: 0.75rem;
-    margin: 0 0.5rem;
-    padding: 1rem 0;
+    gap: 1rem;
+    margin: 0 0.75rem;
   }
 
   .category-item {
-    min-width: 80px;
+    min-width: 90px;
     padding: 0.65rem;
   }
 
-  .category-item span {
-    font-size: 0.8rem;
-  }
-
-  .category-item img {
+  .category-img-wrapper {
     width: 45px;
     height: 45px;
   }
-}
 
-/* Tablet (481px - 768px) */
-@media (min-width: 481px) and (max-width: 768px) {
-  .category-carousel {
-    gap: 1.25rem;
-    padding: 1.25rem 0;
-  }
-
-  .category-item {
-    min-width: 100px;
-    padding: 0.85rem;
-  }
-
-  .category-item span {
-    font-size: 0.95rem;
+  .category-name {
+    font-size: 0.85rem;
   }
 }
 
-/* Desktop (769px+) */
-@media (min-width: 769px) {
+/* Tablet */
+@media (min-width: 768px) and (max-width: 1023px) {
   .category-carousel {
     gap: 1.5rem;
     padding: 1.5rem 0;
@@ -153,49 +120,20 @@
     min-width: 110px;
   }
 
-  .category-item:hover {
-    transform: translateY(-3px);
-  }
-}/* src/styles/global.css */
-
-/* Imágenes de productos */
-.product-image,
-.category-item img,
-.featured-image,
-.product-detail-image {
-  width: 100%;
-  height: 180px;
-  object-fit: cover;
-  background: #f0f0f0;
-  border-radius: 8px;
-}
-
-/* Ajuste para móviles pequeños */
-@media (max-width: 480px) {
-  .product-image,
-  .category-item img,
-  .featured-image,
-  .product-detail-image {
-    height: 140px;
-  }
-}
-
-/* Ajuste para tablet */
-@media (min-width: 768px) and (max-width: 1023px) {
-  .product-image,
-  .category-item img,
-  .featured-image,
-  .product-detail-image {
-    height: 160px;
+  .category-img-wrapper {
+    width: 55px;
+    height: 55px;
   }
 }
 
 /* Desktop */
 @media (min-width: 1024px) {
-  .product-image,
-  .category-item img,
-  .featured-image,
-  .product-detail-image {
-    height: 200px;
+  .category-carousel {
+    gap: 1.75rem;
+    padding: 1.75rem 0;
+  }
+
+  .category-item:hover {
+    transform: translateY(-3px);
   }
 }

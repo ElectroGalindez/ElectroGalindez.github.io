@@ -1,132 +1,73 @@
 /* src/styles/Auth.css */
 
-/* Variables de diseño (ElectroGalíndez) */
-:root {
-  --primary: #0066cc;
-  --primary-hover: #0055aa;
-  --text: #1d1d1f;
-  --text-light: #636366;
-  --bg: #f8f4eb;
-  --bg-secondary: #eae6e0;
-  --shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-  --border: 1px solid rgba(0, 0, 0, 0.1);
-  --border-focus: 1px solid #0066cc;
-  --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --radius: 12px;
-  --radius-lg: 16px;
-  --transition: all 0.2s ease;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.25rem;
-  --text-2xl: 1.5rem;
-}
-
-/* Modo oscuro */
-[data-theme='dark'] {
-  --primary: #0066cc;
-  --primary-hover: #0055aa;
-  --text: #f8f4eb;
-  --text-light: #d1d1d6;
-  --bg: #1c1c1e;
-  --bg-secondary: #2c2c2e;
-  --shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
-  --border: 1px solid rgba(255, 255, 255, 0.1);
-  --border-focus: 1px solid #0066cc;
-  --bg-input: #2a2a2a;
-  --text-input: #f8f4eb;
-}
-
-/* Reset */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-/* Layout */
 .auth-container {
-  min-height: 100vh;
+  min-height: 80vh;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--bg-secondary);
-  padding: var(--space-4);
-  font-family: var(--font);
+  padding: 2rem;
 }
 
-/* Tarjeta de autenticación */
 .auth-card {
   background: var(--bg);
   backdrop-filter: blur(10px);
-  padding: var(--space-8);
+  padding: 2.5rem;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
   width: 100%;
-  max-width: 440px;
+  max-width: 420px;
   text-align: center;
-  border: var(--border);
-  transition: var(--transition);
+  border: 1px solid var(--border-color);
+  transition: transform 0.2s ease;
 }
 
 .auth-card:hover {
   transform: translateY(-2px);
 }
 
-/* Títulos */
 .auth-title {
-  margin: 0 0 var(--space-3) 0;
+  margin: 0 0 0.5rem 0;
   color: var(--text);
   font-weight: 600;
   font-size: var(--text-2xl);
 }
 
 .auth-subtitle {
-  color: var(--text-light);
-  font-size: var(--text-base);
-  margin: 0 0 var(--space-8) 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  margin: 0 0 2rem 0;
 }
 
-/* Inputs flotantes (Material Design) */
 .input-group {
   position: relative;
-  margin-bottom: var(--space-6);
+  margin-bottom: 1.5rem;
 }
 
 .input-group input {
   width: 100%;
-  padding: 1rem var(--space-4);
-  border: var(--border);
+  padding: 1rem;
+  border: 1px solid var(--border-color);
   border-radius: var(--radius);
   outline: none;
   background: #fff;
   color: var(--text);
-  font-size: var(--text-base);
-  transition: var(--transition);
-}
-
-[data-theme='dark'] .input-group input {
-  background: var(--bg-input);
-  color: var(--text-input);
+  font-size: 1rem;
+  transition: all 0.2s ease;
 }
 
 .input-group input:focus,
 .input-group input:not(:placeholder-shown) {
-  border: var(--border-focus);
+  border: 1px solid var(--primary);
   box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.2);
 }
 
 .input-group label {
   position: absolute;
-  left: var(--space-4);
+  left: 1rem;
   top: 1rem;
-  color: var(--text-light);
-  font-size: var(--text-base);
+  color: var(--text-secondary);
+  font-size: 1rem;
   transition: all 0.2s ease;
   pointer-events: none;
 }
@@ -138,19 +79,17 @@
   color: var(--primary);
 }
 
-/* Mensaje de error */
 .error-message {
   background: #ffebee;
   color: #c62828;
   padding: 0.75rem;
   border-radius: var(--radius);
-  margin: 0 0 var(--space-6) 0;
+  margin: 0 0 1.5rem 0;
   font-size: var(--text-sm);
   text-align: left;
   border: 1px solid #ef9a9a;
 }
 
-/* Botón de autenticación */
 .auth-button {
   background: var(--primary);
   color: white;
@@ -158,10 +97,10 @@
   padding: 0.75rem 1rem;
   width: 100%;
   border-radius: var(--radius);
-  font-size: var(--text-base);
+  font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
-  transition: var(--transition);
+  transition: background 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -172,34 +111,6 @@
   background: var(--primary-hover);
 }
 
-.auth-button:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-}
-
-/* Spinner */
-.spinner {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border: 2px solid #f3f3f3;
-  border-top: 2px solid white;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Enlace inferior */
-.auth-switch {
-  margin-top: var(--space-6);
-  font-size: var(--text-sm);
-  color: var(--text-light);
-}
-
 .link-button {
   background: none;
   border: none;
@@ -207,45 +118,9 @@
   text-decoration: underline;
   cursor: pointer;
   padding: 0;
-  font-size: var(--text-sm);
-  font-weight: 500;
+  font-size: 0.95rem;
 }
 
 .link-button:hover {
   color: var(--primary-hover);
-}
-
-.link-button:disabled {
-  color: #ccc;
-  cursor: not-allowed;
-  text-decoration: none;
-}
-
-/* Responsive: Móviles pequeños */
-@media (max-width: 480px) {
-  .auth-card {
-    padding: var(--space-6);
-    margin: 0 var(--space-3);
-  }
-
-  .auth-title {
-    font-size: var(--text-xl);
-  }
-
-  .auth-subtitle,
-  .auth-switch {
-    font-size: 0.9rem;
-  }
-
-  .input-group input,
-  .auth-button {
-    font-size: var(--text-base);
-  }
-}
-
-/* Tablet */
-@media (min-width: 768px) {
-  .auth-container {
-    padding: var(--space-8);
-  }
 }

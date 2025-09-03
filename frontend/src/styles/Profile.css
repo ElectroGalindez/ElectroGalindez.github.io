@@ -1,6 +1,6 @@
 /* src/styles/Profile.css */
 .profile-container {
-  min-height: 100vh;
+  min-height: 20vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -244,7 +244,7 @@
 /* Responsive */
 @media (max-width: 480px) {
   .profile-card {
-    padding: 2rem 1.5rem;
+    padding: 1rem 1.5rem;
     border-radius: 12px;
   }
   .profile-header h2 {

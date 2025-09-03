@@ -25,10 +25,8 @@ function ProductList() {
   const hasError = error && products.length === 0;
   const noProducts = !isLoading && displayedProducts.length === 0;
 
-  // ✅ Cargar productos una vez
-  useEffect(() => {
-    refreshProducts();
-  }, [refreshProducts]);
+  // ✅ Solo refresca si se necesita (botón de reintento)
+  // ❌ No llames a refreshProducts() en useEffect sin control
 
   return (
     <div className="product-page" aria-labelledby="product-list-title">
@@ -43,7 +41,7 @@ function ProductList() {
         <CategoryCarousel />
       </div>
 
-      {/* Mensaje de error */}
+      {/* Mensaje de error solo si no hay productos en caché */}
       {hasError && (
         <div className="error-banner" role="alert">
           <strong>⚠️ {error}</strong>

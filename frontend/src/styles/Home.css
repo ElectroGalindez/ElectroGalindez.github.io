@@ -1,82 +1,10 @@
 /* src/styles/Home.css */
 
-/* Reset y base */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-/* Variables de diseño (ElectroGalíndez) */
-:root {
-  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-  --font-mono: 'Courier New', monospace;
-
-  /* Escala tipográfica */
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.25rem;
-  --text-2xl: 1.5rem;
-  --text-3xl: 1.875rem;
-  --text-4xl: 2.25rem;
-  --text-5xl: 3rem;
-
-  /* Espaciado */
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
-
-  /* Radios */
-  --radius: 12px;
-  --radius-lg: 20px;
-  --radius-pill: 50px;
-
-  /* Sombra */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 8px 15px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 16px 30px rgba(0, 0, 0, 0.15);
-
-  /* Transiciones */
-  --transition: all 0.2s ease;
-
-  /* Colores */
-  --bg: #242424;
-  --bg-alt: #1c1c1e;
-  --text: #f8f4eb;
-  --text-secondary: #d1d1d6;
-  --border-color: #424245;
-  --primary: #0066cc;
-  --primary-hover: #0055aa;
-  --success: #28a745;
-  --whatsapp: #25D366;
-}
-
-/* Modo claro */
-@media (prefers-color-scheme: light) {
-  :root {
-    --bg: #fafafa;
-    --bg-alt: #ffffff;
-    --text: #1d1d1f;
-    --text-secondary: #636366;
-    --border-color: #e5e5e7;
-  }
-}
-
-/* Layout principal */
 .home-page {
   min-height: 100vh;
-  font-family: var(--font-sans);
-  background: var(--bg);
-  color: var(--text);
-  line-height: 1.6;
   padding-bottom: var(--space-6);
 }
 
-/* Título de sección */
 .section-title {
   text-align: center;
   font-size: var(--text-2xl);
@@ -86,7 +14,7 @@
   padding: 0 var(--space-4);
 }
 
-/* ==================== HERO ==================== */
+/* HERO */
 .hero-section {
   padding: var(--space-6) var(--space-4);
   background: linear-gradient(135deg, var(--primary) 0%, #004080 100%);
@@ -110,7 +38,7 @@
   margin: 0 auto;
 }
 
-/* ==================== CATEGORÍAS ==================== */
+/* CATEGORÍAS */
 .categories-section {
   padding: 0 var(--space-4) var(--space-6);
 }
@@ -149,7 +77,7 @@
   box-shadow: var(--shadow);
 }
 
-/* ==================== PRODUCTOS DESTACADOS ==================== */
+/* PRODUCTOS DESTACADOS */
 .featured-section {
   padding: 0 var(--space-4) var(--space-8);
 }
@@ -222,7 +150,7 @@
   color: white;
 }
 
-/* ==================== CTA FINAL ==================== */
+/* CTA FINAL */
 .cta-section {
   padding: var(--space-8) var(--space-4);
   background: var(--bg-alt);
@@ -263,101 +191,33 @@
   box-shadow: 0 8px 20px rgba(37, 211, 102, 0.4);
 }
 
-/* ==================== RESPONSIVE ==================== */
-
-/* Móviles pequeños (320px - 480px) */
+/* RESPONSIVE */
 @media (max-width: 480px) {
-  .hero-section h1 {
-    font-size: var(--text-3xl);
-  }
-
-  .hero-section p {
-    font-size: var(--text-base);
-    max-width: 40ch;
-  }
-
-  .section-title {
-    font-size: var(--text-xl);
-    margin: var(--space-6) 0 var(--space-4);
-  }
-
-  .category-pill {
-    padding: var(--space-3) 1rem;
-    font-size: 0.8rem;
-  }
-
-  .featured-name {
-    font-size: var(--text-base);
-  }
-
-  .featured-price {
-    font-size: var(--text-lg);
-  }
-
-  .btn-whatsapp-large {
-    font-size: var(--text-base);
-    padding: 0.75rem 1.25rem;
-  }
+  .hero-section h1 { font-size: var(--text-3xl); }
+  .hero-section p { font-size: var(--text-base); max-width: 40ch; }
+  .section-title { font-size: var(--text-xl); margin: var(--space-6) 0 var(--space-4); }
+  .category-pill { padding: var(--space-3) 1rem; font-size: 0.8rem; }
+  .featured-name { font-size: var(--text-base); }
+  .featured-price { font-size: var(--text-lg); }
+  .btn-whatsapp-large { font-size: var(--text-base); padding: 0.75rem 1.25rem; }
 }
 
-/* Tablet (481px - 768px) */
 @media (min-width: 481px) and (max-width: 768px) {
-  .featured-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .hero-section h1 {
-    font-size: var(--text-4xl);
-  }
+  .featured-grid { grid-template-columns: repeat(2, 1fr); }
+  .hero-section h1 { font-size: var(--text-4xl); }
 }
 
-/* Desktop (769px+) */
 @media (min-width: 769px) {
-  .section-title {
-    font-size: var(--text-3xl);
-  }
-
-  .hero-section h1 {
-    font-size: var(--text-5xl);
-  }
-
-  .hero-section p {
-    font-size: var(--text-xl);
-    max-width: 50ch;
-  }
-
-  .category-filter {
-    justify-content: center;
-  }
-
-  .category-pill {
-    font-size: var(--text-base);
-    padding: var(--space-3) 1.5rem;
-  }
-
-  .featured-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-8);
-  }
-
-  .featured-image {
-    height: 200px;
-  }
-
-  .cta-section {
-    padding: var(--space-8);
-    margin: var(--space-8) auto;
-    max-width: 1200px;
-  }
+  .section-title { font-size: var(--text-3xl); }
+  .hero-section h1 { font-size: var(--text-5xl); }
+  .hero-section p { font-size: var(--text-xl); max-width: 50ch; }
+  .category-filter { justify-content: center; }
+  .category-pill { font-size: var(--text-base); padding: var(--space-3) 1.5rem; }
+  .featured-grid { grid-template-columns: repeat(2, 1fr); gap: var(--space-8); }
+  .featured-image { height: 200px; }
+  .cta-section { padding: var(--space-8); margin: var(--space-8) auto; max-width: 1200px; }
 }
 
-/* Large Desktop (1024px+) */
 @media (min-width: 1024px) {
-  .featured-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .home-page {
-    padding: 0 1rem;
-  }
+  .featured-grid { grid-template-columns: repeat(3, 1fr); }
 }

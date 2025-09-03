@@ -8,6 +8,7 @@ import { StoreProvider } from './context/StoreContext';
 import { CartProvider } from './context/CartContext';
 import { AdminProvider } from './context/AdminContext';
 import App from './App';
+import './styles/reset.css'
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(

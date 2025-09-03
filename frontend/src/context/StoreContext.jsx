@@ -45,15 +45,19 @@ export const StoreProvider = ({ children }) => {
   };
 
   const fetchProducts = async () => {
-    if (loading.products) return; // ✅ Evita llamadas duplicadas
+    if (loading.products) return;
     setLoading(prev => ({ ...prev, products: true }));
     try {
       const data = await fetchWithAuth('/products');
       const productsArray = Array.isArray(data) ? data : data.products || [];
       setProducts(productsArray);
       setFilteredProducts([]);
+      setError(null); // ✅ Limpia el error si la carga fue exitosa
     } catch (err) {
-      setError(err.message);
+      // ✅ No sobreescribe si ya hay productos
+      if (products.length === 0) {
+        setError(err.message);
+      }
     } finally {
       setLoading(prev => ({ ...prev, products: false }));
     }
@@ -67,7 +71,8 @@ export const StoreProvider = ({ children }) => {
       const categoriesArray = Array.isArray(data) ? data : data.categories || [];
       setCategories(categoriesArray);
     } catch (err) {
-      setError(err.message);
+      console.warn('[StoreContext] No se pudieron cargar categorías:', err.message);
+      // ✅ No muestra error global por categorías
     } finally {
       setLoading(prev => ({ ...prev, categories: false }));
     }
@@ -88,11 +93,21 @@ export const StoreProvider = ({ children }) => {
     }
   };
 
+  // ✅ Carga inicial
   useEffect(() => {
     fetchProducts();
     fetchCategories();
     fetchFeatured();
   }, []);
+
+  const filterByCategory = (categoryId) => {
+    if (!categoryId) {
+      setFilteredProducts([]);
+      return;
+    }
+    const filtered = products.filter(p => p.category?._id === categoryId);
+    setFilteredProducts(filtered);
+  };
 
   const value = {
     products,
@@ -104,14 +119,7 @@ export const StoreProvider = ({ children }) => {
     refreshProducts: fetchProducts,
     refreshCategories: fetchCategories,
     refreshFeatured: fetchFeatured,
-    filterByCategory: (categoryId) => {
-      if (!categoryId) {
-        setFilteredProducts([]);
-        return;
-      }
-      const filtered = products.filter(p => p.category?._id === categoryId);
-      setFilteredProducts(filtered);
-    },
+    filterByCategory,
     getProductById: (id) => [...products, ...featured].find(p => p._id === id)
   };
 

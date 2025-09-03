@@ -1,0 +1,61 @@
+/* src/styles/reset.css */
+/*
+ * Reset de estilos del navegador
+ * Solo lo esencial para neutralizar user-agent
+ */
+
+*,
+*::before,
+*::after {
+  padding: 0;
+  margin: 0;
+  border: 0;
+  box-sizing: border-box;
+}
+
+*:where(img, svg, video, canvas, audio, iframe, embed, object) {
+  display: block;
+}
+
+*:where(p, h1, h2, h3, h4, h5, h6, ul, ol, dl, blockquote, pre, figure, table, form, fieldset) {
+  margin-block-start: 0;
+  margin-block-end: 0;
+}
+
+*:where(ul, ol) {
+  list-style: none;
+}
+
+*:where(a, button, input, textarea, select) {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+}
+
+*:where(button) {
+  cursor: pointer;
+}
+
+*:where(img, picture, video, canvas, svg) {
+  max-width: 100%;
+  height: auto;
+}
+
+*:where(table) {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+*:where(input, textarea, select, button) {
+  font-size: 1rem;
+}
+
+/* Evita el resaltado azul en móviles */
+*:where(a, button) {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Scroll suave solo si el navegador lo soporta */
+:where(html) {
+  scroll-behavior: smooth;
+}
