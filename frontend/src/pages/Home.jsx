@@ -1,6 +1,6 @@
 // src/pages/Home.jsx
 import React from 'react';
-import CategoryRow from '../components/CategoryCarousel';
+import CategoryRow from '../components/CategoryFilter';
 import FeaturedProducts from '../components/FeaturedProducts';
 import WhatsAppButton from '../components/WhatsAppButton';
 import '../styles/Home.css';

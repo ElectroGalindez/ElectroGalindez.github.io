@@ -1,9 +1,9 @@
 // src/pages/ProductList.jsx
 import React, { useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useStore } from '../context/StoreContext';
 import { useApp } from '../context/AppContext';
-import CategoryCarousel from '../components/CategoryCarousel';
+import CategoryFilter from '../components/CategoryFilter';
 import WhatsAppButton from '../components/WhatsAppButton';
 import ProductCard from '../components/ProductCard';
 import '../styles/ProductList.css';
@@ -14,19 +14,32 @@ function ProductList() {
     categories, 
     filteredProducts, 
     loading, 
-    error, 
-    refreshProducts 
+    error,
+    selectedCategory,
+    filterByCategory,
+    clearFilter // ✅ Asegúrate de tener esta función
   } = useStore();
 
   const { formatPrice, currency } = useApp();
+  const location = useLocation();
 
-  const displayedProducts = filteredProducts.length > 0 ? filteredProducts : products;
+  // ✅ Detectar si venimos del Home
+  const fromHome = location.state?.from === '/';
+
+  // ✅ Resetear filtro si venimos del Home
+  useEffect(() => {
+    if (fromHome && selectedCategory !== null) {
+      clearFilter();
+    }
+  }, [fromHome, selectedCategory, clearFilter]);
+
+  const displayedProducts = selectedCategory !== null 
+    ? filteredProducts 
+    : products;
+
   const isLoading = loading.products;
   const hasError = error && products.length === 0;
   const noProducts = !isLoading && displayedProducts.length === 0;
-
-  // ✅ Solo refresca si se necesita (botón de reintento)
-  // ❌ No llames a refreshProducts() en useEffect sin control
 
   return (
     <div className="product-page" aria-labelledby="product-list-title">
@@ -38,10 +51,10 @@ function ProductList() {
 
       {/* Filtro por categorías */}
       <div className="category-filter-section">
-        <CategoryCarousel />
+        <CategoryFilter />
       </div>
 
-      {/* Mensaje de error solo si no hay productos en caché */}
+      {/* Mensaje de error */}
       {hasError && (
         <div className="error-banner" role="alert">
           <strong>⚠️ {error}</strong>
@@ -51,7 +64,6 @@ function ProductList() {
       {/* Grid de productos */}
       <div className="products-grid">
         {isLoading ? (
-          // Skeleton loading
           Array.from({ length: 8 }).map((_, index) => (
             <div key={`skeleton-${index}`} className="product-card skeleton">
               <div className="product-image-wrapper">
@@ -68,10 +80,14 @@ function ProductList() {
           ))
         ) : noProducts ? (
           <div className="no-products">
-            <p>No hay productos disponibles en este momento.</p>
+            <p>
+              {selectedCategory 
+                ? 'No hay productos disponibles en esta categoría.' 
+                : 'No hay productos disponibles en este momento.'
+              }
+            </p>
           </div>
         ) : (
-          // ✅ Usa ProductCard reutilizable
           displayedProducts.map((product) => (
             <ProductCard
               key={product._id}

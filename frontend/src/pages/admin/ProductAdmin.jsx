@@ -1,56 +1,52 @@
 // src/components/admin/ProductAdmin.jsx
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import { FaEdit, FaTrash, FaImage, FaLink, FaPlus, FaBoxOpen } from 'react-icons/fa';
 import '../../styles/ProductAdmin.css';
 
 const ProductAdmin = () => {
-  const { 
-    products, 
-    categories,        
-    createProduct, 
-    updateProduct, 
-    deleteProduct, 
-    loading 
+  const {
+    products,
+    categories,
+    createProduct,
+    updateProduct,
+    deleteProduct,
+    loading
   } = useAdmin();
 
   const [search, setSearch] = useState('');
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
+    id: null,
     name: '',
     price: '',
     description: '',
     image_url: '',
-    category_id: '',
-    id: null,
+    category_id: ''
   });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [formErrors, setFormErrors] = useState({});
 
+  // ✅ Validación de datos
   const safeProducts = Array.isArray(products) ? products : [];
   const safeCategories = Array.isArray(categories) ? categories : [];
 
+  // ✅ Filtrado optimizado
   const filteredProducts = useMemo(() => {
     if (!search.trim()) return safeProducts;
+    const term = search.toLowerCase().trim();
     return safeProducts.filter(p => {
       if (!p) return false;
-      const nameMatch = p.name?.toLowerCase().includes(search.toLowerCase()) || false;
-      const descMatch = p.description?.toLowerCase().includes(search.toLowerCase()) || false;
-      return nameMatch || descMatch;
+      return (
+        p.name?.toLowerCase().includes(term) ||
+        p.description?.toLowerCase().includes(term)
+      );
     });
   }, [safeProducts, search]);
 
-  // ✅ Función para evitar caché de imágenes
-  const getImageUrl = (url) => {
-    if (!url) return '/placeholder.png';
-    const hasQuery = url.includes('?');
-    const separator = hasQuery ? '&' : '?';
-    return `${url}${separator}v=${Date.now()}`;
-  };
-
-  // ✅ Limpiar URL al desmontar o cambiar
+  // ✅ Limpieza de URL de objeto
   useEffect(() => {
     return () => {
       if (imagePreview && imagePreview.startsWith('blob:')) {
@@ -59,29 +55,29 @@ const ProductAdmin = () => {
     };
   }, [imagePreview]);
 
-  const handleChange = (e) => {
+  // ✅ Manejo de cambios en inputs
+  const handleChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     if (formErrors[name]) {
       setFormErrors(prev => ({ ...prev, [name]: null }));
     }
-  };
+  }, [formErrors]);
 
-  const handleImageFileChange = (e) => {
+  // ✅ Subida de archivo
+  const handleImageFileChange = useCallback((e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      setFormErrors(prev => ({ ...prev, image: 'Solo se permiten imágenes' }));
-      return;
+      return setFormErrors(prev => ({ ...prev, image: 'Solo se permiten imágenes' }));
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      setFormErrors(prev => ({ ...prev, image: 'La imagen no debe superar 5MB' }));
-      return;
+      return setFormErrors(prev => ({ ...prev, image: 'La imagen no debe superar 5MB' }));
     }
 
-    // ✅ Liberar la URL anterior
+    // Liberar URL anterior
     if (imagePreview && imagePreview.startsWith('blob:')) {
       URL.revokeObjectURL(imagePreview);
     }
@@ -91,12 +87,12 @@ const ProductAdmin = () => {
     setImagePreview(objectUrl);
     setFormData(prev => ({ ...prev, image_url: '' }));
     setFormErrors(prev => ({ ...prev, image: null }));
-  };
+  }, [imagePreview]);
 
-  const handleImageUrlChange = (e) => {
+  // ✅ Uso de URL externa
+  const handleImageUrlChange = useCallback((e) => {
     const url = e.target.value.trim();
-    
-    // ✅ Si había una URL de archivo, liberarla
+
     if (imagePreview && imagePreview.startsWith('blob:')) {
       URL.revokeObjectURL(imagePreview);
     }
@@ -105,9 +101,10 @@ const ProductAdmin = () => {
     setImageFile(null);
     setImagePreview(url);
     setFormErrors(prev => ({ ...prev, image: null }));
-  };
+  }, [imagePreview]);
 
-  const validateForm = () => {
+  // ✅ Validación del formulario
+  const validateForm = useCallback(() => {
     const newErrors = {};
     const name = formData.name?.trim();
     const price = parseFloat(formData.price);
@@ -119,17 +116,35 @@ const ProductAdmin = () => {
 
     setFormErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
+  }, [formData, imageFile]);
 
-  const handleSubmit = async (e) => {
+  // ✅ Reset del formulario
+  const resetForm = useCallback(() => {
+    setFormData({
+      id: null,
+      name: '',
+      price: '',
+      description: '',
+      image_url: '',
+      category_id: ''
+    });
+    setImageFile(null);
+    if (imagePreview && imagePreview.startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreview);
+    }
+    setImagePreview('');
+    setIsEditing(false);
+    setFormErrors({});
+  }, [imagePreview]);
+
+  // ✅ Envío del formulario
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     setError(null);
 
     if (!validateForm()) return;
 
     const productData = new FormData();
-
-    // ✅ Solo campos esenciales
     productData.append('name', formData.name.trim());
     productData.append('price', formData.price);
     productData.append('description', formData.description.trim());
@@ -147,34 +162,23 @@ const ProductAdmin = () => {
       } else {
         await createProduct(productData);
       }
-
-      // ✅ Resetear
-      setFormData({
-        name: '',
-        price: '',
-        description: '',
-        image_url: '',
-        category_id: '',
-        id: null,
-      });
-      setImageFile(null);
-      
-      // ✅ Liberar la URL actual
-      if (imagePreview && imagePreview.startsWith('blob:')) {
-        URL.revokeObjectURL(imagePreview);
-      }
-      
-      setImagePreview('');
-      setIsEditing(false);
-      setFormErrors({});
+      resetForm();
     } catch (err) {
       console.error('❌ Error al guardar producto:', err);
       setError(`Error: ${err.message}`);
     }
-  };
+  }, [
+    formData,
+    imageFile,
+    isEditing,
+    validateForm,
+    createProduct,
+    updateProduct,
+    resetForm
+  ]);
 
-  const handleEdit = (product) => {
-    // ✅ Liberar la URL anterior antes de editar
+  // ✅ Editar producto
+  const handleEdit = useCallback((product) => {
     if (imagePreview && imagePreview.startsWith('blob:')) {
       URL.revokeObjectURL(imagePreview);
     }
@@ -185,15 +189,16 @@ const ProductAdmin = () => {
       price: product.price ? product.price.toString() : '',
       description: product.description || '',
       image_url: product.images?.[0] || '',
-      category_id: product.category?._id || '',
+      category_id: product.category?._id || ''
     });
     setImagePreview(product.images?.[0] || '');
     setImageFile(null);
     setIsEditing(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, [imagePreview]);
 
-  const handleDelete = async (id) => {
+  // ✅ Eliminar producto
+  const handleDelete = useCallback(async (id) => {
     if (!window.confirm('¿Eliminar este producto? Esta acción no se puede deshacer.')) return;
     try {
       await deleteProduct(id);
@@ -201,17 +206,21 @@ const ProductAdmin = () => {
     } catch (err) {
       setError('Error al eliminar el producto.');
     }
-  };
+  }, [deleteProduct]);
 
-  const formatPrice = (price) =>
+  // ✅ Formateo de precio
+  const formatPrice = useCallback((price) =>
     new Intl.NumberFormat('es-CU', {
       style: 'currency',
       currency: 'CUP',
-    }).format(price || 0);
+    }).format(price || 0),
+    []
+  );
 
+  // ✅ Renderizado de carga
   if (loading) {
     return (
-      <div className="product-admin loading">
+      <div className="product-admin loading" aria-busy="true">
         <FaBoxOpen size={40} className="spinner-icon" />
         <p>Cargando productos y categorías...</p>
       </div>
@@ -230,7 +239,7 @@ const ProductAdmin = () => {
         <h2>{isEditing ? 'Editar Producto' : 'Nuevo Producto'}</h2>
         {error && <div className="alert error">{error}</div>}
 
-        <form onSubmit={handleSubmit} className="product-form">
+        <form onSubmit={handleSubmit} className="product-form" noValidate>
           <div className="form-grid">
             <div className="form-group">
               <label htmlFor="name">Nombre *</label>
@@ -238,7 +247,7 @@ const ProductAdmin = () => {
                 type="text"
                 id="name"
                 name="name"
-                value={formData.name || ''}
+                value={formData.name}
                 onChange={handleChange}
                 placeholder="Nombre del producto"
                 aria-invalid={!!formErrors.name}
@@ -252,7 +261,7 @@ const ProductAdmin = () => {
                 type="number"
                 id="price"
                 name="price"
-                value={formData.price || ''}
+                value={formData.price}
                 onChange={handleChange}
                 placeholder="0.00"
                 step="0.01"
@@ -267,7 +276,7 @@ const ProductAdmin = () => {
               <select
                 id="category_id"
                 name="category_id"
-                value={formData.category_id || ''}
+                value={formData.category_id}
                 onChange={handleChange}
                 aria-invalid={!!formErrors.category_id}
                 disabled={safeCategories.length === 0}
@@ -290,11 +299,10 @@ const ProductAdmin = () => {
                 onClick={() => document.getElementById('imageFile').click()}
               >
                 {imagePreview ? (
-                  <img 
-                    key={imagePreview} // ✅ Fuerza re-render
-                    src={getImageUrl(imagePreview)} // ✅ Evita caché
-                    alt="Vista previa" 
-                    className="preview" 
+                  <img
+                    src={imagePreview}
+                    alt="Vista previa"
+                    className="preview"
                     onLoad={() => console.log('✅ Imagen cargada')}
                     onError={(e) => { e.target.src = '/placeholder.png'; }}
                   />
@@ -324,7 +332,7 @@ const ProductAdmin = () => {
                   type="url"
                   id="image_url"
                   name="image_url"
-                  value={formData.image_url || ''}
+                  value={formData.image_url}
                   onChange={handleImageUrlChange}
                   placeholder="https://ejemplo.com/imagen.jpg"
                 />
@@ -339,7 +347,7 @@ const ProductAdmin = () => {
             <textarea
               id="description"
               name="description"
-              value={formData.description || ''}
+              value={formData.description}
               onChange={handleChange}
               rows="3"
               placeholder="Escribe una descripción detallada..."
@@ -355,23 +363,7 @@ const ProductAdmin = () => {
               <button
                 type="button"
                 className="btn secondary"
-                onClick={() => {
-                  // ✅ Liberar URL al cancelar
-                  if (imagePreview && imagePreview.startsWith('blob:')) {
-                    URL.revokeObjectURL(imagePreview);
-                  }
-                  setFormData({
-                    name: '',
-                    price: '',
-                    description: '',
-                    image_url: '',
-                    category_id: '',
-                    id: null,
-                  });
-                  setImageFile(null);
-                  setImagePreview('');
-                  setIsEditing(false);
-                }}
+                onClick={resetForm}
               >
                 Cancelar
               </button>
@@ -389,6 +381,7 @@ const ProductAdmin = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="table-search"
+            aria-label="Buscar productos"
           />
         </div>
 
@@ -409,7 +402,7 @@ const ProductAdmin = () => {
                 <div key={product._id} className="product-card">
                   <div className="product-image">
                     <img
-                      src={getImageUrl(product.images?.[0])} // ✅ Evita caché
+                      src={product.images?.[0] || '/placeholder.png'}
                       alt={product.name || 'Producto'}
                       loading="lazy"
                       onError={(e) => { e.target.src = '/placeholder.png'; }}
@@ -449,4 +442,4 @@ const ProductAdmin = () => {
   );
 };
 
-export default ProductAdmin;
+export default React.memo(ProductAdmin);

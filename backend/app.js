@@ -1,13 +1,17 @@
 // backend/app.js
 const express = require('express');
 const cors = require('cors');
+const path = require('path'); // ← Añadido
 const app = express();
 
 // 1. Middlewares
 app.use(cors({ origin: 'http://localhost:5173' }));
 app.use(express.json());
 
-// 2. Rutas de API (ANTES que cualquier *)
+// ✅ Servir archivos estáticos (IMAGES)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// 2. Rutas de API
 app.use('/api/categories', require('./routes/categories.routes'));
 app.use('/api/products', require('./routes/product.routes'));
 app.use('/api/auth', require('./routes/auth.routes'));

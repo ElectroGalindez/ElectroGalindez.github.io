@@ -1,5 +1,5 @@
 // src/pages/ProductDetail.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useStore } from "../context/StoreContext";
 import WhatsAppButton from "../components/WhatsAppButton";
@@ -7,44 +7,56 @@ import "../styles/ProductDetail.css";
 
 function ProductDetail() {
   const { id } = useParams();
-  const { products, getProductById } = useStore();
+  const { getProductById } = useStore();
   const navigate = useNavigate();
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
 
-  const formatPrice = (price) =>
+  const formatPrice = useCallback((price) =>
     new Intl.NumberFormat('es-CU', {
       style: 'currency',
       currency: 'CUP',
-    }).format(price || 0);
+    }).format(price || 0),
+    []
+  );
 
   useEffect(() => {
     let isMounted = true;
 
     const loadProduct = async () => {
+      if (!id) {
+        if (isMounted) {
+          setError('ID del producto no válido');
+          setLoading(false);
+        }
+        return;
+      }
+
       setLoading(true);
-      setError('');
+      setError(null);
 
       try {
-        const cached = products.find(p => p._id === id);
-        if (isMounted && cached) {
-          setProduct(cached);
+        // 1. Intentar desde el contexto (caché)
+        const cachedProduct = getProductById(id);
+        if (isMounted && cachedProduct) {
+          setProduct(cachedProduct);
           setLoading(false);
           return;
         }
 
+        // 2. Si no está en caché, intentar desde API
         const fetchedProduct = await getProductById(id);
         if (isMounted) {
           setProduct(fetchedProduct);
         }
       } catch (err) {
         if (isMounted) {
-          setError(err.message.includes('404') 
-            ? "Producto no encontrado" 
-            : "No se pudo cargar el producto. Intenta más tarde."
-          );
+          const errorMessage = err.message.includes('404')
+            ? 'Producto no encontrado'
+            : 'No se pudo cargar el producto. Revisa tu conexión.';
+          setError(errorMessage);
         }
       } finally {
         if (isMounted) {
@@ -58,20 +70,20 @@ function ProductDetail() {
     return () => {
       isMounted = false;
     };
-  }, [id, products, getProductById]);
+  }, [id, getProductById]);
 
-  const handleWhatsApp = () => {
+  const handleWhatsApp = useCallback(() => {
     if (!product) return;
     const message = encodeURIComponent(
       `Hola, estoy interesado en el producto:\n\n${product.name}\nPrecio: ${formatPrice(product.price)}\n\n¿Tiene disponible?`
     );
     const whatsappUrl = `https://wa.me/5358956749?text=${message}`;
-    window.open(whatsappUrl, '_blank');
-  };
+    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+  }, [product, formatPrice]);
 
   if (loading) {
     return (
-      <div className="product-detail loading">
+      <div className="product-detail loading" aria-busy="true">
         <div className="loading-skeleton">
           <div className="skeleton-image"></div>
           <div className="skeleton-info">
@@ -93,12 +105,12 @@ function ProductDetail() {
   if (error || !product) {
     return (
       <div className="product-detail error">
-        <div className="error-container" role="alert">
+        <div className="error-container" role="alert" aria-live="polite">
           <h2>Producto no disponible</h2>
           <p>
             {error === "Producto no encontrado"
               ? "El producto que buscas no existe o ha sido eliminado."
-              : "No se pudo cargar el producto. Intenta más tarde."}
+              : "No se pudo cargar el producto. Verifica tu conexión e inténtalo más tarde."}
           </p>
           <div className="error-actions">
             <button onClick={() => navigate(-1)} className="btn-back">← Volver atrás</button>
@@ -110,24 +122,35 @@ function ProductDetail() {
   }
 
   return (
-    <div className="product-detail" itemScope itemType="https://schema.org/Product" aria-labelledby="product-title">
+    <div
+      className="product-detail"
+      itemScope
+      itemType="https://schema.org/Product"
+      aria-labelledby="product-title"
+    >
+      {/* Schema.org JSON-LD */}
       <script type="application/ld+json">
         {JSON.stringify({
           "@context": "https://schema.org",
           "@type": "Product",
           "name": product.name,
           "image": product.images?.[0] || null,
-          "description": product.description || "",
+          "description": product.description || "Producto disponible en ElectroGalíndez.",
           "offers": {
             "@type": "Offer",
             "price": product.price,
             "priceCurrency": "CUP",
             "availability": "https://schema.org/InStock",
-            "seller": { "@type": "Organization", "name": "ElectroGalíndez" }
+            "seller": {
+              "@type": "Organization",
+              "name": "ElectroGalíndez",
+              "url": "https://electrogalindez.com"
+            }
           }
         })}
       </script>
 
+      {/* Galería */}
       <div className="product-gallery">
         <img
           src={product.images?.[0] || '/placeholders/product-large.png'}
@@ -135,27 +158,31 @@ function ProductDetail() {
           className="product-main-image"
           loading="lazy"
           itemProp="image"
-          onError={(e) => { e.target.src = '/placeholders/fallback-large.png'; }}
+          onError={(e) => {
+            e.target.src = '/placeholders/fallback-large.png';
+            e.target.alt = 'Imagen no disponible';
+          }}
         />
-        {product.featured && <span className="badge featured">⭐ Destacado</span>}
+        {product.featured && (
+          <span className="badge featured" aria-label="Producto destacado">⭐ Destacado</span>
+        )}
       </div>
 
+      {/* Información */}
       <div className="product-info">
         <h1 id="product-title" itemProp="name">{product.name}</h1>
-        
-        <p 
-          className="product-price" 
-          itemProp="offers" 
-          itemScope 
+
+        <p
+          className="product-price"
+          itemProp="offers"
+          itemScope
           itemType="https://schema.org/Offer"
-          >
-            <meta itemProp="priceCurrency" content="CUP" />
-            <span itemProp="price">
-              {new Intl.NumberFormat('es-CU', {
-                style: 'currency',
-                currency: 'CUP'
-              }).format(product.price).replace('CUP', '').trim()}
-            </span>
+        >
+          <meta itemProp="priceCurrency" content="CUP" />
+          <meta itemProp="availability" content="https://schema.org/InStock" />
+          <span itemProp="price">
+            {formatPrice(product.price)}
+          </span>
         </p>
 
         {product.description && (
@@ -180,10 +207,18 @@ function ProductDetail() {
         )}
 
         <div className="product-actions">
-          <button onClick={handleWhatsApp} className="btn-whatsapp" aria-label={`Solicitar ${product.name} por WhatsApp`}>
+          <button
+            onClick={handleWhatsApp}
+            className="btn-whatsapp"
+            aria-label={`Solicitar ${product.name} por WhatsApp`}
+          >
             💬 Solicitar por WhatsApp
           </button>
-          <button onClick={() => navigate(-1)} className="btn-continue" aria-label="Seguir comprando">
+          <button
+            onClick={() => navigate(-1)}
+            className="btn-continue"
+            aria-label="Seguir comprando"
+          >
             ← Seguir comprando
           </button>
         </div>
@@ -194,4 +229,4 @@ function ProductDetail() {
   );
 }
 
-export default ProductDetail;
+export default React.memo(ProductDetail);

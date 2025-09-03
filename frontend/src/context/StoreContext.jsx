@@ -1,5 +1,5 @@
 // src/context/StoreContext.jsx
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 const StoreContext = createContext();
 
@@ -20,6 +20,7 @@ export const StoreProvider = ({ children }) => {
     featured: false
   });
   const [error, setError] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState(null); // ✅ Estado añadido
 
   const API_BASE = 'http://localhost:3001/api';
 
@@ -52,9 +53,8 @@ export const StoreProvider = ({ children }) => {
       const productsArray = Array.isArray(data) ? data : data.products || [];
       setProducts(productsArray);
       setFilteredProducts([]);
-      setError(null); // ✅ Limpia el error si la carga fue exitosa
+      setError(null);
     } catch (err) {
-      // ✅ No sobreescribe si ya hay productos
       if (products.length === 0) {
         setError(err.message);
       }
@@ -72,7 +72,6 @@ export const StoreProvider = ({ children }) => {
       setCategories(categoriesArray);
     } catch (err) {
       console.warn('[StoreContext] No se pudieron cargar categorías:', err.message);
-      // ✅ No muestra error global por categorías
     } finally {
       setLoading(prev => ({ ...prev, categories: false }));
     }
@@ -93,21 +92,29 @@ export const StoreProvider = ({ children }) => {
     }
   };
 
+  // ✅ Limpia el filtro y la categoría seleccionada
+  const clearFilter = useCallback(() => {
+    setFilteredProducts([]);
+    setSelectedCategory(null);
+  }, []);
+
+  // ✅ Filtra productos por categoría
+  const filterByCategory = useCallback((categoryId) => {
+    if (!categoryId) {
+      clearFilter();
+      return;
+    }
+    const filtered = products.filter(p => p.category?._id === categoryId);
+    setFilteredProducts(filtered);
+    setSelectedCategory(categoryId);
+  }, [products, clearFilter]);
+
   // ✅ Carga inicial
   useEffect(() => {
     fetchProducts();
     fetchCategories();
     fetchFeatured();
   }, []);
-
-  const filterByCategory = (categoryId) => {
-    if (!categoryId) {
-      setFilteredProducts([]);
-      return;
-    }
-    const filtered = products.filter(p => p.category?._id === categoryId);
-    setFilteredProducts(filtered);
-  };
 
   const value = {
     products,
@@ -116,10 +123,12 @@ export const StoreProvider = ({ children }) => {
     filteredProducts,
     loading,
     error,
+    selectedCategory, // ✅ Expuesto
     refreshProducts: fetchProducts,
     refreshCategories: fetchCategories,
     refreshFeatured: fetchFeatured,
     filterByCategory,
+    clearFilter,
     getProductById: (id) => [...products, ...featured].find(p => p._id === id)
   };
 
