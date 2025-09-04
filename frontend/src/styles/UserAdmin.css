@@ -10,24 +10,153 @@
 
 /* Header */
 .user-header {
-  margin-bottom: 2.5rem;
   text-align: center;
+  margin-bottom: 2rem;
 }
 
 .user-header h1 {
   font-size: 1.8rem;
   font-weight: 600;
+  margin-bottom: 0.5rem;
   color: var(--text);
-  margin: 0 0 0.5rem 0;
 }
 
 .user-header p {
-  color: var(--text-secondary);
   font-size: 0.95rem;
+  color: var(--text-secondary);
   margin: 0;
 }
 
-/* Carga */
+/* Toolbar */
+.user-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+.search-wrapper {
+  position: relative;
+  max-width: 400px;
+  width: 100%;
+}
+
+.search-wrapper input {
+  width: 100%;
+  padding: 0.6rem 0.75rem 0.6rem 2.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: var(--text);
+  background: #f8f4eb;
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+}
+
+/* Tabla */
+.user-table-container {
+  overflow-x: auto;
+}
+
+.user-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+}
+
+.user-table th, .user-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.user-table th {
+  font-weight: 600;
+  color: var(--text);
+  background: #f8f4eb;
+}
+
+.user-table td {
+  color: var(--text-secondary);
+}
+
+.role-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: inline-block;
+  text-align: center;
+}
+
+.role-admin {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.role-user {
+  background: #f1f1f1;
+  color: #555;
+}
+
+.user-table select {
+  padding: 0.4rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  font-size: 0.85rem;
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+}
+
+/* Paginación */
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 0.25rem;
+  margin-top: 1rem;
+}
+
+.pagination-btn {
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: #f8f4eb;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: var(--primary);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-btn.active {
+  background: var(--primary);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Empty state */
+.user-table .no-results {
+  text-align: center;
+  padding: 1rem 0;
+  color: var(--text-secondary);
+}
+
+/* Loading */
 .user-admin.loading {
   display: flex;
   flex-direction: column;
@@ -39,177 +168,30 @@
 }
 
 .loading-icon {
+  animation: spin 2s linear infinite;
   color: var(--primary);
-  animation: pulse 2s infinite;
 }
 
-@keyframes pulse {
-  0% { opacity: 0.6; }
-  50% { opacity: 1; }
-  100% { opacity: 0.6; }
-}
-
-/* Barra de herramientas */
-.user-toolbar {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 1.5rem;
-}
-
-.search-wrapper {
-  position: relative;
-  width: 100%;
-  max-width: 500px;
-}
-
-.search-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-secondary);
-}
-
-.search-wrapper input {
-  width: 100%;
-  padding: 0.75rem 0.75rem 0.75rem 2.5rem;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  background: #f8f4eb;
-  color: var(--text);
-  font-size: 0.95rem;
-}
-
-.search-wrapper input:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-}
-
-/* Tabla */
-.user-table-container {
-  background: var(--bg-alt);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-}
-
-.user-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.user-table th,
-.user-table td {
-  padding: 0.75rem 1rem;
-  text-align: left;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.user-table th {
-  background: #f8f4eb;
-  color: var(--text);
-  font-weight: 500;
-  font-size: 0.95rem;
-}
-
-.user-table th svg {
-  margin-right: 0.5rem;
-  opacity: 0.8;
-}
-
-.user-email {
-  font-family: monospace;
-  font-size: 0.9rem;
-  color: var(--text);
-}
-
-.role-badge {
-  padding: 0.25rem 0.5rem;
-  border-radius: 999px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  text-transform: uppercase;
-}
-
-.role-badge.role-user {
-  background: #e3f2fd;
-  color: #0d47a1;
-}
-
-.role-badge.role-admin {
-  background: #f3e5f5;
-  color: #4a148c;
-}
-
-.user-table select {
-  padding: 0.5rem;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  background: #f8f4eb;
-  color: var(--text);
-  font-size: 0.95rem;
-}
-
-.user-table select:focus {
-  outline: none;
-  border-color: var(--primary);
-}
-
-/* Paginación */
-.pagination {
-  display: flex;
-  justify-content: center;
-  gap: 0.5rem;
-  margin-top: 1.5rem;
-}
-
-.pagination-btn {
-  width: 40px;
-  height: 40px;
-  border: 1px solid var(--border-color);
-  background: #f8f4eb;
-  color: var(--text);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.95rem;
-}
-
-.pagination-btn:hover:not(:disabled) {
-  background: var(--primary);
-  color: white;
-  border-color: var(--primary);
-}
-
-.pagination-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.pagination-btn.active {
-  background: var(--primary);
-  color: white;
-  border-color: var(--primary);
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .user-admin {
-    padding: 1.5rem 1rem;
+  .user-header {
+    text-align: left;
   }
-  .user-table th,
-  .user-table td {
-    padding: 0.6rem 0.8rem;
-    font-size: 0.9rem;
+
+  .user-toolbar {
+    justify-content: flex-start;
+    margin-bottom: 1.5rem;
   }
-  .user-table th {
-    font-size: 0.85rem;
+
+  .user-table th, .user-table td {
+    padding: 0.5rem 0.75rem;
   }
-  .pagination-btn {
-    width: 36px;
-    height: 36px;
-    font-size: 0.9rem;
+
+  .pagination {
+    flex-wrap: wrap;
   }
 }

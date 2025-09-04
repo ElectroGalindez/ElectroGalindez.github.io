@@ -1,505 +1,297 @@
 // src/components/admin/ProductAdmin.jsx
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useAdmin } from '../../context/AdminContext';
-import { FaEdit, FaTrash, FaImage, FaLink, FaPlus, FaBoxOpen, FaTag } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaLink, FaPlus, FaBoxOpen } from 'react-icons/fa';
 import '../../styles/ProductAdmin.css';
 
 const ProductAdmin = () => {
   const {
-    products,
-    categories,
-    createProduct,
-    updateProduct,
-    deleteProduct,
-    loading
+    products, categories,
+    createProduct, updateProduct, deleteProduct,
+    loadingProducts, loadingCategories,
+    loadProducts, loadCategories
   } = useAdmin();
 
   const [search, setSearch] = useState('');
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
-    id: null,
-    name: '',
-    price: '',
-    originalPrice: '', // ✅ Precio original (tachado)
-    description: '',
-    image_url: '',
-    category_id: '',
-    onSale: false // ✅ Indicador de oferta
+    id: null, name: '', price: '', description: '', image_url: '', category_id: '', onSale: false
   });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [formErrors, setFormErrors] = useState({});
 
-  // ✅ Validación de datos
   const safeProducts = Array.isArray(products) ? products : [];
   const safeCategories = Array.isArray(categories) ? categories : [];
 
-  // ✅ Filtrado optimizado
+  // ---------------- Paginación ----------------
+  const PRODUCTS_PER_PAGE = 6;
+  const [currentPage, setCurrentPage] = useState(1);
+
   const filteredProducts = useMemo(() => {
     if (!search.trim()) return safeProducts;
     const term = search.toLowerCase().trim();
-    return safeProducts.filter(p => {
-      if (!p) return false;
-      return (
-        p.name?.toLowerCase().includes(term) ||
-        p.description?.toLowerCase().includes(term)
-      );
-    });
+    return safeProducts.filter(p =>
+      p.name?.toLowerCase().includes(term) ||
+      p.description?.toLowerCase().includes(term)
+    );
   }, [safeProducts, search]);
 
-  // ✅ Limpieza de URL de objeto
-  useEffect(() => {
-    return () => {
-      if (imagePreview && imagePreview.startsWith('blob:')) {
-        URL.revokeObjectURL(imagePreview);
-      }
-    };
-  }, [imagePreview]);
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
+    const endIndex = startIndex + PRODUCTS_PER_PAGE;
+    return filteredProducts.slice(startIndex, endIndex);
+  }, [filteredProducts, currentPage]);
 
-  // ✅ Manejo de cambios en inputs
+  const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
+  const handlePrevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
+  const handleNextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
+
+  // ---------------- Carga inicial ----------------
+  useEffect(() => {
+    loadCategories();
+    loadProducts();
+    return () => { if (imagePreview.startsWith('blob:')) URL.revokeObjectURL(imagePreview); };
+  }, [loadCategories, loadProducts, imagePreview]);
+
+  // ---------------- Inputs controlados ----------------
   const handleChange = useCallback((e) => {
     const { name, value, type, checked } = e.target;
-    const val = type === 'checkbox' ? checked : value;
-    setFormData(prev => ({ ...prev, [name]: val }));
-    if (formErrors[name]) {
-      setFormErrors(prev => ({ ...prev, [name]: null }));
-    }
+    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+    if (formErrors[name]) setFormErrors(prev => ({ ...prev, [name]: null }));
   }, [formErrors]);
 
-  // ✅ Subida de archivo
+  // ---------------- Imagen ----------------
   const handleImageFileChange = useCallback((e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      return setFormErrors(prev => ({ ...prev, image: 'Solo se permiten imágenes' }));
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      return setFormErrors(prev => ({ ...prev, image: 'La imagen no debe superar 5MB' }));
-    }
-
-    // Liberar URL anterior
-    if (imagePreview && imagePreview.startsWith('blob:')) {
-      URL.revokeObjectURL(imagePreview);
-    }
-
+    if (!file.type.startsWith('image/')) return setFormErrors(prev => ({ ...prev, image: 'Solo imágenes' }));
+    if (file.size > 5 * 1024 * 1024) return setFormErrors(prev => ({ ...prev, image: 'Máx 5MB' }));
+    if (imagePreview.startsWith('blob:')) URL.revokeObjectURL(imagePreview);
     setImageFile(file);
-    const objectUrl = URL.createObjectURL(file);
-    setImagePreview(objectUrl);
+    setImagePreview(URL.createObjectURL(file));
     setFormData(prev => ({ ...prev, image_url: '' }));
     setFormErrors(prev => ({ ...prev, image: null }));
   }, [imagePreview]);
 
-  // ✅ Uso de URL externa
   const handleImageUrlChange = useCallback((e) => {
     const url = e.target.value.trim();
-
-    if (imagePreview && imagePreview.startsWith('blob:')) {
-      URL.revokeObjectURL(imagePreview);
-    }
-
+    if (imagePreview.startsWith('blob:')) URL.revokeObjectURL(imagePreview);
     setFormData(prev => ({ ...prev, image_url: url }));
     setImageFile(null);
     setImagePreview(url);
     setFormErrors(prev => ({ ...prev, image: null }));
   }, [imagePreview]);
 
-  // ✅ Validación del formulario
+  // ---------------- Validación ----------------
   const validateForm = useCallback(() => {
-    const newErrors = {};
+    const errors = {};
     const name = formData.name?.trim();
     const price = parseFloat(formData.price);
-    const originalPrice = parseFloat(formData.originalPrice || 0);
+    const description = formData.description?.trim();
 
-    if (!name) newErrors.name = 'Nombre requerido';
-    if (!price || isNaN(price) || price <= 0) newErrors.price = 'Precio inválido';
-    if (formData.onSale && (!originalPrice || originalPrice <= price)) {
-      newErrors.originalPrice = 'El precio original debe ser mayor al precio en oferta';
-    }
-    if (!formData.category_id) newErrors.category_id = 'Selecciona una categoría';
-    if (!imageFile && !formData.image_url?.trim()) newErrors.image = 'Requiere una imagen';
+    if (!name) errors.name = 'Nombre requerido';
+    if (!price || isNaN(price) || price <= 0) errors.price = 'Precio inválido';
+    if (!formData.category_id) errors.category_id = 'Selecciona categoría';
+    if (!description) errors.description = 'Descripción requerida';
+    if (!imageFile && !formData.image_url?.trim()) errors.image = 'Imagen requerida';
 
-    setFormErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
   }, [formData, imageFile]);
 
-  // ✅ Reset del formulario
+  // ---------------- Reset Form ----------------
   const resetForm = useCallback(() => {
-    setFormData({
-      id: null,
-      name: '',
-      price: '',
-      originalPrice: '',
-      description: '',
-      image_url: '',
-      category_id: '',
-      onSale: false
-    });
+    setFormData({ id: null, name: '', price: '', description: '', image_url: '', category_id: '', onSale: false });
     setImageFile(null);
-    if (imagePreview && imagePreview.startsWith('blob:')) {
-      URL.revokeObjectURL(imagePreview);
-    }
+    if (imagePreview.startsWith('blob:')) URL.revokeObjectURL(imagePreview);
     setImagePreview('');
     setIsEditing(false);
     setFormErrors({});
+    setError(null);
   }, [imagePreview]);
 
-  // ✅ Envío del formulario
+  // ---------------- Submit ----------------
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     setError(null);
-
     if (!validateForm()) return;
 
-    const productData = new FormData();
-    productData.append('name', formData.name.trim());
-    productData.append('price', formData.price);
-    productData.append('description', formData.description.trim());
-    productData.append('category', formData.category_id);
-    productData.append('onSale', formData.onSale);
-    if (formData.onSale) {
-      productData.append('originalPrice', formData.originalPrice);
-    }
-
-    if (imageFile) {
-      productData.append('image', imageFile);
-    } else if (formData.image_url) {
-      productData.append('image_url', formData.image_url);
-    }
-
     try {
-      if (isEditing) {
-        await updateProduct(formData.id, productData);
+      let payload;
+      if (imageFile) {
+        payload = new FormData();
+        payload.append('name', formData.name.trim());
+        payload.append('price', parseFloat(formData.price).toFixed(2));
+        payload.append('description', formData.description.trim());
+        payload.append('category', formData.category_id);
+        payload.append('onSale', formData.onSale ? 'true' : 'false');
+        payload.append('image', imageFile);
       } else {
-        await createProduct(productData);
+        payload = {
+          name: formData.name.trim(),
+          price: parseFloat(formData.price).toFixed(2),
+          description: formData.description.trim(),
+          category: formData.category_id,
+          onSale: formData.onSale,
+        };
+        if (formData.image_url?.trim()) payload.image_url = formData.image_url.trim();
       }
+
+      if (isEditing) await updateProduct(formData.id, payload);
+      else await createProduct(payload);
       resetForm();
     } catch (err) {
-      console.error('❌ Error al guardar producto:', err);
-      setError(`Error: ${err.message}`);
+      setError(err?.message || 'Error al guardar producto');
     }
-  }, [
-    formData,
-    imageFile,
-    isEditing,
-    validateForm,
-    createProduct,
-    updateProduct,
-    resetForm
-  ]);
+  }, [formData, imageFile, isEditing, validateForm, createProduct, updateProduct, resetForm]);
 
-  // ✅ Editar producto
+  // ---------------- Editar ----------------
   const handleEdit = useCallback((product) => {
-    if (imagePreview && imagePreview.startsWith('blob:')) {
-      URL.revokeObjectURL(imagePreview);
-    }
-
+    if (imagePreview.startsWith('blob:')) URL.revokeObjectURL(imagePreview);
     setFormData({
-      id: product._id,
+      id: product._id || product.id,
       name: product.name || '',
       price: product.price ? product.price.toString() : '',
-      originalPrice: product.originalPrice ? product.originalPrice.toString() : '',
       description: product.description || '',
-      image_url: product.images?.[0] || '',
-      category_id: product.category?._id || '',
+      image_url: product.images?.[0] || product.image_url || '',
+      category_id: product.category?._id || product.category?.id || product.category || '',
       onSale: product.onSale || false
     });
-    setImagePreview(product.images?.[0] || '');
+    setImagePreview(product.images?.[0] || product.image_url || '');
     setImageFile(null);
     setIsEditing(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [imagePreview]);
 
-  // ✅ Eliminar producto
+  // ---------------- Eliminar ----------------
   const handleDelete = useCallback(async (id) => {
-    if (!window.confirm('¿Eliminar este producto? Esta acción no se puede deshacer.')) return;
-    try {
-      await deleteProduct(id);
-      setError(null);
-    } catch (err) {
-      setError('Error al eliminar el producto.');
-    }
-  }, [deleteProduct]);
+    if (!window.confirm('¿Eliminar este producto?')) return;
+    try { await deleteProduct(id); resetForm(); } catch { setError('Error al eliminar'); }
+  }, [deleteProduct, resetForm]);
 
-  // ✅ Formateo de precio
-  const formatPrice = useCallback((price) =>
-    new Intl.NumberFormat('es-CU', {
-      style: 'currency',
-      currency: 'CUP',
-    }).format(price || 0),
-    []
+  // ---------------- Formato precio ----------------
+  const formatPrice = useCallback((price) => new Intl.NumberFormat('es-CU', { style: 'currency', currency: 'CUP' }).format(price || 0), []);
+
+  // ---------------- Render ----------------
+  if (loadingProducts || loadingCategories) return (
+    <div className="product-admin loading">
+      <FaBoxOpen size={40} className="spinner-icon"/>
+      <p>Cargando productos...</p>
+    </div>
   );
 
-  // ✅ Renderizado de carga
-  if (loading) {
-    return (
-      <div className="product-admin loading" aria-busy="true">
-        <FaBoxOpen size={40} className="spinner-icon" />
-        <p>Cargando productos y categorías...</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="product-admin" aria-labelledby="product-admin-title">
+    <div className="product-admin">
       <header className="product-header">
-        <h1 id="product-admin-title">Gestión de Productos</h1>
-        <p>Administra los productos de tu tienda: agrega, edita o elimina.</p>
+        <h1>Gestión de Productos</h1>
+        <p>Agrega, edita o elimina productos</p>
       </header>
 
-      {/* Formulario */}
       <section className="form-section">
         <h2>{isEditing ? 'Editar Producto' : 'Nuevo Producto'}</h2>
         {error && <div className="alert error">{error}</div>}
-
         <form onSubmit={handleSubmit} className="product-form" noValidate>
           <div className="form-grid">
             <div className="form-group">
-              <label htmlFor="name">Nombre *</label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="Nombre del producto"
-                aria-invalid={!!formErrors.name}
-              />
+              <label>Nombre *</label>
+              <input type="text" name="name" value={formData.name} onChange={handleChange} aria-invalid={!!formErrors.name}/>
               {formErrors.name && <span className="error-text">{formErrors.name}</span>}
             </div>
-
             <div className="form-group">
-              <label htmlFor="price">Precio en oferta (CUP) *</label>
-              <input
-                type="number"
-                id="price"
-                name="price"
-                value={formData.price}
-                onChange={handleChange}
-                placeholder="0.00"
-                step="0.01"
-                min="0"
-                aria-invalid={!!formErrors.price}
-              />
+              <label>Precio *</label>
+              <input type="number" name="price" value={formData.price} onChange={handleChange} step="0.01" min="0" aria-invalid={!!formErrors.price}/>
               {formErrors.price && <span className="error-text">{formErrors.price}</span>}
             </div>
-
-            {/* Precio original */}
             <div className="form-group">
-              <label htmlFor="originalPrice">Precio original (CUP)</label>
-              <div className="input-with-icon">
-                <FaTag size={16} />
-                <input
-                  type="number"
-                  id="originalPrice"
-                  name="originalPrice"
-                  value={formData.originalPrice}
-                  onChange={handleChange}
-                  placeholder="0.00"
-                  step="0.01"
-                  min="0"
-                  disabled={!formData.onSale}
-                />
-              </div>
-              {formErrors.originalPrice && <span className="error-text">{formErrors.originalPrice}</span>}
+              <label><input type="checkbox" name="onSale" checked={formData.onSale} onChange={handleChange}/> En oferta</label>
             </div>
-
-            {/* Checkbox de oferta */}
             <div className="form-group">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  name="onSale"
-                  checked={formData.onSale}
-                  onChange={handleChange}
-                />
-                <span>Marcar como en oferta</span>
-              </label>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="category_id">Categoría *</label>
-              <select
-                id="category_id"
-                name="category_id"
-                value={formData.category_id}
-                onChange={handleChange}
-                aria-invalid={!!formErrors.category_id}
-                disabled={safeCategories.length === 0}
-              >
+              <label>Categoría *</label>
+              <select name="category_id" value={formData.category_id} onChange={handleChange} aria-invalid={!!formErrors.category_id}>
                 <option value="">Seleccionar categoría</option>
-                {safeCategories.map(cat => (
-                  <option key={cat._id} value={cat._id}>
-                    {cat.name}
-                  </option>
-                ))}
+                {safeCategories.map(cat => <option key={cat._id || cat.id} value={cat._id || cat.id}>{cat.name}</option>)}
               </select>
               {formErrors.category_id && <span className="error-text">{formErrors.category_id}</span>}
             </div>
-
-            {/* Subir imagen */}
             <div className="form-group">
-              <label htmlFor="imageFile">Subir Imagen</label>
-              <div
-                className={`image-upload-area ${imageFile ? 'has-preview' : ''}`}
-                onClick={() => document.getElementById('imageFile').click()}
-              >
-                {imagePreview ? (
-                  <img
-                    src={imagePreview}
-                    alt="Vista previa"
-                    className="preview"
-                    onLoad={() => console.log('✅ Imagen cargada')}
-                    onError={(e) => {
-                      e.target.src = '/placeholders/fallback.png';
-                      console.error('❌ Error al cargar imagen:', e.target.src);
-                    }}
-                  />
-                ) : (
-                  <div className="upload-placeholder">
-                    <FaPlus size={24} />
-                    <p>Selecciona una imagen</p>
-                  </div>
-                )}
+              <label>Imagen</label>
+              <div className={`image-upload-area ${imageFile ? 'has-preview' : ''}`} onClick={()=>document.getElementById('imageFile').click()}>
+                {imagePreview ? <img src={imagePreview} alt="Preview" className="preview" onError={e=>e.target.src='/placeholders/fallback.png'}/> :
+                  <div className="upload-placeholder"><FaPlus size={24}/><p>Selecciona imagen</p></div>}
               </div>
-              <input
-                type="file"
-                id="imageFile"
-                name="image"
-                accept="image/*"
-                onChange={handleImageFileChange}
-                style={{ display: 'none' }}
-              />
+              <input type="file" id="imageFile" accept="image/*" onChange={handleImageFileChange} style={{display:'none'}}/>
             </div>
-
-            {/* Pegar URL */}
             <div className="form-group">
-              <label htmlFor="image_url">O usar URL de imagen</label>
-              <div className="input-with-icon">
-                <FaLink size={16} />
-                <input
-                  type="url"
-                  id="image_url"
-                  name="image_url"
-                  value={formData.image_url}
-                  onChange={handleImageUrlChange}
-                  placeholder="https://ejemplo.com/imagen.jpg"
-                />
+              <label>O usar URL de imagen</label>
+              <div className="input-with-icon"><FaLink size={16}/>
+                <input type="url" name="image_url" value={formData.image_url} onChange={handleImageUrlChange} placeholder="https://ejemplo.com/imagen.jpg"/>
               </div>
+              {formErrors.image && <span className="error-text">{formErrors.image}</span>}
             </div>
           </div>
-
-          {formErrors.image && <span className="error-text full">{formErrors.image}</span>}
-
           <div className="form-group full">
-            <label htmlFor="description">Descripción *</label>
-            <textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              rows="3"
-              placeholder="Escribe una descripción detallada..."
-            />
+            <label>Descripción *</label>
+            <textarea name="description" value={formData.description} onChange={handleChange} rows="3"/>
             {formErrors.description && <span className="error-text">{formErrors.description}</span>}
           </div>
-
           <div className="form-actions">
-            <button type="submit" className="btn primary">
-              {isEditing ? 'Actualizar Producto' : 'Agregar Producto'}
-            </button>
-            {isEditing && (
-              <button
-                type="button"
-                className="btn secondary"
-                onClick={resetForm}
-              >
-                Cancelar
-              </button>
-            )}
+            <button type="submit" className="btn primary">{isEditing ? 'Actualizar' : 'Agregar'}</button>
+            {isEditing && <button type="button" className="btn secondary" onClick={resetForm}>Cancelar</button>}
           </div>
         </form>
       </section>
 
-      {/* Lista de productos */}
       <section className="table-section">
         <div className="table-header">
-          <input
-            type="text"
-            placeholder="Buscar productos..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="table-search"
-            aria-label="Buscar productos"
-          />
+          <input type="text" placeholder="Buscar productos..." value={search} onChange={e=>{setSearch(e.target.value); setCurrentPage(1);}} className="table-search"/>
+        </div>
+        <div className="product-list">
+          {paginatedProducts.length === 0 ? (
+            <div className="empty-state">
+              <FaBoxOpen size={40} color="#ccc"/>
+              <p>{safeProducts.length === 0 ? 'No hay productos' : 'No se encontraron resultados'}</p>
+            </div>
+          ) : paginatedProducts.map((product, index) => {
+            const productId = product._id || product.id || index;
+            const productImage = product.images?.[0] || product.image_url || '/placeholders/fallback.png';
+            let category;
+            if (product.category) {
+              category = safeCategories.find(c => c._id === product.category._id) ||
+                         safeCategories.find(c => c._id === product.category) ||
+                         { name: 'Sin categoría' };
+            } else category = { name: 'Sin categoría' };
+
+            return (
+              <div key={productId} className={`product-card ${product.onSale ? 'sale' : ''}`}>
+                {product.onSale && <div className="badge-sale">En Oferta</div>}
+                <div className="product-image">
+                  <img src={productImage} alt={product.name || 'Producto'} onError={e => e.target.src='/placeholders/fallback.png'}/>
+                </div>
+                <div className="product-info">
+                  <h3>{product.name || 'Sin nombre'}</h3>
+                  <p className="product-category">{category.name}</p>
+                  <p className="product-desc">{product.description || 'Sin descripción'}</p>
+                  <p className={`product-price ${product.onSale ? 'sale' : ''}`}>{product.price != null ? formatPrice(Number(product.price)) : 'Sin precio'}</p>
+                </div>
+                <div className="product-actions-admin">
+                  <button onClick={() => handleEdit(product)} className="action-btn edit"><FaEdit size={16}/></button>
+                  <button onClick={() => handleDelete(productId)} className="action-btn delete"><FaTrash size={16}/></button>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
-        <div className="product-list">
-          {filteredProducts.length === 0 ? (
-            <div className="empty-state">
-              <FaBoxOpen size={40} color="#ccc" />
-              <p>
-                {safeProducts.length === 0
-                  ? 'No hay productos disponibles. Agrega uno nuevo.'
-                  : 'No se encontraron productos con ese criterio.'}
-              </p>
-            </div>
-          ) : (
-            filteredProducts.map((product) => {
-              const category = safeCategories.find(c => c._id === product.category?._id);
-              return (
-                <div key={product._id} className="product-card">
-                  <div className="product-image">
-                    <img
-                      src={product.images?.[0] || '/placeholders/fallback.png'}
-                      alt={product.name || 'Producto'}
-                      loading="lazy"
-                      onError={(e) => {
-                        e.target.src = '/placeholders/fallback.png';
-                        console.error(`❌ Imagen no encontrada: ${product.images?.[0]}`);
-                      }}
-                    />
-                  </div>
-                  <div className="product-info">
-                    <h3>{product.name}</h3>
-                    <p className="product-category">{category?.name || 'Sin categoría'}</p>
-                    <div className="product-price-container">
-                      {product.onSale && product.originalPrice && (
-                        <span className="original-price">
-                          {formatPrice(product.originalPrice)}
-                        </span>
-                      )}
-                      <span className={`current-price ${product.onSale ? 'on-sale' : ''}`}>
-                        {formatPrice(product.price)}
-                      </span>
-                    </div>
-                    <p className="product-desc" title={product.description}>
-                      {product.description || 'Sin descripción'}
-                    </p>
-                  </div>
-                  <div className="product-actions">
-                    <button
-                      onClick={() => handleEdit(product)}
-                      className="action-btn edit"
-                      aria-label="Editar producto"
-                    >
-                      <FaEdit />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(product._id)}
-                      className="action-btn delete"
-                      aria-label="Eliminar producto"
-                    >
-                      <FaTrash />
-                    </button>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
+        {/* Paginación */}
+        {totalPages > 1 && (
+          <div className="pagination">
+            <button onClick={handlePrevPage} disabled={currentPage === 1}>Anterior</button>
+            <span>Página {currentPage} de {totalPages}</span>
+            <button onClick={handleNextPage} disabled={currentPage === totalPages}>Siguiente</button>
+          </div>
+        )}
       </section>
     </div>
   );

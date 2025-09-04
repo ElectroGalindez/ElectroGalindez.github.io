@@ -1,7 +1,7 @@
-// src/components/admin/AdminSidebar.jsx
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { FaHome, FaBox, FaTags, FaUsers, FaClipboardList, FaArrowLeft } from 'react-icons/fa';
+import '../../styles/AdminSidebar.css';
 
 const menuItems = [
   { path: 'dashboard', label: 'Dashboard', icon: FaHome },
@@ -15,37 +15,30 @@ const menuItems = [
 function AdminSidebar() {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  // Detectar si es móvil
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    handleResize(); // Ejecutar al cargar
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Cerrar menú móvil al cambiar de ruta
-  useEffect(() => {
-    setIsMobileMenuOpen(false);
-  }, [location]);
+  // Cerrar menú móvil al navegar
+  useEffect(() => setIsMobileMenuOpen(false), [location]);
 
   return (
     <>
-      {/* Botón hamburguesa: solo en móvil */}
+      {/* Botón hamburguesa */}
       {isMobile && (
         <button
           className="admin-sidebar-toggle"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          aria-label="Menú"
+          aria-label="Menú de administración"
         >
           ☰
         </button>
       )}
 
-      {/* Sidebar */}
       <aside
         className={`admin-sidebar ${isMobile && !isMobileMenuOpen ? 'closed' : 'open'}`}
         role="navigation"
@@ -53,14 +46,14 @@ function AdminSidebar() {
       >
         {/* Logo */}
         <div className="admin-logo">
-          <Link to="/" aria-label="Inicio de ElectroGalíndez">
+          <Link to="/" aria-label="Inicio">
             <img
               src="/logo.svg"
               alt="ElectroGalíndez"
               className="logo-image"
+              width={200}
+              height={60}
               loading="eager"
-              width="250"
-              height="80"
               onError={(e) => {
                 e.target.src = '/placeholders/logo-fallback.png';
                 e.target.alt = 'ElectroGalíndez';
@@ -71,11 +64,9 @@ function AdminSidebar() {
 
         {/* Menú */}
         <nav className="admin-nav">
-          {menuItems.map((item) => {
+          {menuItems.map(item => {
             const Icon = item.icon;
-            const isActive = item.path === '/' 
-              ? false 
-              : location.pathname === `/admin/${item.path}`;
+            const isActive = item.path !== '/' && location.pathname.includes(`/admin/${item.path}`);
             return (
               <Link
                 key={item.path}
@@ -83,19 +74,20 @@ function AdminSidebar() {
                 className={`admin-nav-item ${isActive ? 'active' : ''}`}
                 aria-current={isActive ? 'page' : undefined}
               >
-                <Icon /> {item.label}
+                <Icon /> <span>{item.label}</span>
               </Link>
             );
           })}
         </nav>
       </aside>
 
-      {/* Overlay para móvil */}
+      {/* Overlay móvil */}
       {isMobile && isMobileMenuOpen && (
         <div
           className="admin-sidebar-overlay"
           onClick={() => setIsMobileMenuOpen(false)}
-        ></div>
+          aria-hidden="true"
+        />
       )}
     </>
   );

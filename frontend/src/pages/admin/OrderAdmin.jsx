@@ -1,19 +1,15 @@
-// src/components/admin/OrderAdmin.jsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import { FaShoppingCart, FaUser, FaCalendarAlt, FaWhatsapp, FaTrash } from 'react-icons/fa';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import '../../styles/OrderAdmin.css';
 
-// ✅ Formatear precio
+// Formatear precio
 const formatPrice = (amount) =>
-  new Intl.NumberFormat('es-CU', {
-    style: 'currency',
-    currency: 'CUP',
-  }).format(amount || 0);
+  new Intl.NumberFormat('es-CU', { style: 'currency', currency: 'CUP' }).format(amount || 0);
 
-// ✅ Formatear fecha
+// Formatear fecha
 const formatDate = (dateString) => {
   try {
     return format(new Date(dateString), 'dd/MM/yyyy HH:mm', { locale: es });
@@ -22,7 +18,7 @@ const formatDate = (dateString) => {
   }
 };
 
-// ✅ Enviar mensaje por WhatsApp
+// Enviar mensaje por WhatsApp
 const sendWhatsApp = (order) => {
   const { _id, user, items, totalAmount } = order;
   const userName = user?.name || user?.email || 'Cliente';
@@ -31,23 +27,44 @@ const sendWhatsApp = (order) => {
     `Hola ${userName},\n\nHas realizado una orden en ElectroGalíndez:\n\n` +
     `Orden #${_id}\n` +
     `${itemCount} producto(s) por un total de ${formatPrice(totalAmount)}.\n\n` +
-    `Por favor, contáctanos para coordinar entrega y pago.\n\n` +
-    `Gracias por tu confianza.`
+    `Por favor, contáctanos para coordinar entrega y pago.\n\nGracias por tu confianza.`
   );
   const whatsappUrl = `https://wa.me/5358956749?text=${message}`;
   window.open(whatsappUrl, '_blank');
 };
 
 export default function OrderAdmin() {
-  const { orders, deleteOrder, loading, loadOrders } = useAdmin();
+  const { orders, deleteOrder, loadOrders, loadingOrders } = useAdmin();
+  const [localLoading, setLocalLoading] = useState(true);
 
-  React.useEffect(() => {
-    if (!Array.isArray(orders) && !loading) {
-      loadOrders();
+  // Cargar órdenes al montar
+  useEffect(() => {
+    const fetchOrders = async () => {
+      setLocalLoading(true);
+      try {
+        await loadOrders();
+      } catch (err) {
+        console.error('[OrderAdmin] Error cargando órdenes:', err);
+      } finally {
+        setLocalLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, [loadOrders]);
+
+  // Función para eliminar orden y refrescar lista
+  const handleDelete = async (orderId) => {
+    if (!window.confirm(`¿Eliminar la orden #${orderId}?`)) return;
+    try {
+      await deleteOrder(orderId);
+      await loadOrders(); // refrescar lista
+    } catch (err) {
+      console.error('[OrderAdmin] Error eliminando orden:', err);
     }
-  }, [orders, loading, loadOrders]);
+  };
 
-  if (loading) {
+  if (localLoading || loadingOrders) {
     return (
       <div className="order-admin loading" aria-live="polite">
         <div className="spinner"></div>
@@ -122,9 +139,7 @@ export default function OrderAdmin() {
                               {quantity} × {formatPrice(price)}
                             </span>
                           </div>
-                          <span className="item-total">
-                            {formatPrice(total)}
-                          </span>
+                          <span className="item-total">{formatPrice(total)}</span>
                         </li>
                       );
                     })}
@@ -149,11 +164,7 @@ export default function OrderAdmin() {
                   </button>
 
                   <button
-                    onClick={() => {
-                      if (window.confirm(`¿Eliminar la orden #${orderId}?`)) {
-                        deleteOrder(orderId);
-                      }
-                    }}
+                    onClick={() => handleDelete(orderId)}
                     className="btn btn-delete"
                     aria-label={`Eliminar orden ${orderId}`}
                   >

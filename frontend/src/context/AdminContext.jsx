@@ -11,11 +11,7 @@ export const useAdmin = () => {
   return ctx;
 };
 
-/**
- * Convierte un payload a FormData si contiene File o Blob
- * @param {Object|FormData} payload 
- * @returns {{ body: Object|FormData, isFormData: boolean }}
- */
+// ---------------- Utilidades ----------------
 const preparePayload = (payload) => {
   let isFormData = payload instanceof FormData;
   let bodyToSend = payload;
@@ -35,9 +31,6 @@ const preparePayload = (payload) => {
   return { body: bodyToSend, isFormData };
 };
 
-/**
- * Normaliza la respuesta del backend
- */
 const extractData = (res) => {
   if (!res) return res;
   if (res.product) return res.product;
@@ -51,6 +44,7 @@ const extractData = (res) => {
   return res;
 };
 
+// ---------------- Provider ----------------
 export const AdminProvider = ({ children }) => {
   const { getToken } = useAuth();
   const API_BASE = 'http://localhost:3001/api';
@@ -74,7 +68,7 @@ export const AdminProvider = ({ children }) => {
 
   const abortControllers = useRef([]);
 
-  // ---------------- Fetch seguro con token y cancelación ----------------
+  // ---------------- Fetch con auth ----------------
   const fetchWithAuth = useCallback(async (endpoint, options = {}) => {
     const token = getToken();
     if (!token) throw new Error('No autorizado. Inicia sesión nuevamente.');
@@ -128,14 +122,13 @@ export const AdminProvider = ({ children }) => {
       setErrorProducts(err.message || String(err));
       toast.error(`Error cargando productos: ${err.message || err}`);
       throw err;
-    } finally {
-      setLoadingProducts(false);
-    }
+    } finally { setLoadingProducts(false); }
   }, [fetchWithAuth]);
 
   const createProduct = useCallback(async (payload) => {
     setLoadingProducts(true);
     try {
+      if (!payload.name || !payload.price) throw new Error('Nombre y precio son obligatorios');
       const { body, isFormData } = preparePayload(payload);
       const res = await fetchWithAuth('/products', { method: 'POST', body, isFormData });
       const prod = extractData(res);
@@ -144,6 +137,7 @@ export const AdminProvider = ({ children }) => {
       return prod;
     } catch (err) {
       toast.error(`Error al crear producto: ${err.message || err}`);
+      console.error('createProduct error:', err);
       throw err;
     } finally { setLoadingProducts(false); }
   }, [fetchWithAuth]);
@@ -196,6 +190,7 @@ export const AdminProvider = ({ children }) => {
   const createCategory = useCallback(async (payload) => {
     setLoadingCategories(true);
     try {
+      if (!payload.name || !payload.name.trim()) throw new Error('El nombre de la categoría es obligatorio');
       const { body, isFormData } = preparePayload(payload);
       const res = await fetchWithAuth('/categories', { method: 'POST', body, isFormData });
       const cat = extractData(res);
@@ -204,6 +199,7 @@ export const AdminProvider = ({ children }) => {
       return cat;
     } catch (err) {
       toast.error(`Error al crear categoría: ${err.message || err}`);
+      console.error('createCategory error:', err);
       throw err;
     } finally { setLoadingCategories(false); }
   }, [fetchWithAuth]);
@@ -238,7 +234,7 @@ export const AdminProvider = ({ children }) => {
     } finally { setLoadingCategories(false); }
   }, [fetchWithAuth]);
 
-  // ---------------- Orders ----------------
+  // ---------------- Órdenes ----------------
   const loadOrders = useCallback(async () => {
     setLoadingOrders(true); setErrorOrders(null);
     try {
@@ -282,7 +278,7 @@ export const AdminProvider = ({ children }) => {
     } finally { setLoadingOrders(false); }
   }, [fetchWithAuth]);
 
-  // ---------------- Users ----------------
+  // ---------------- Usuarios ----------------
   const loadUsers = useCallback(async () => {
     setLoadingUsers(true); setErrorUsers(null);
     try {
@@ -301,7 +297,7 @@ export const AdminProvider = ({ children }) => {
     if (!id) throw new Error('ID requerido');
     setLoadingUsers(true);
     try {
-      const res = await fetchWithAuth(`/users/${id}/role`, { method: 'PATCH', body: { role } });
+      const res = await fetchWithAuth(`/users/${id}/role`, { method: 'PUT', body: { role } });
       const updated = extractData(res);
       if (updated) setUsers(prev => prev.map(u => u._id === id ? updated : u));
       toast.success('Rol de usuario actualizado');
@@ -327,7 +323,7 @@ export const AdminProvider = ({ children }) => {
     } finally { setLoadingUsers(false); }
   }, [fetchWithAuth]);
 
-  // ---------------- Summary y refreshAll ----------------
+  // ---------------- Resumen y refresh ----------------
   const getAdminSummary = useCallback(async () => {
     try {
       const res = await fetchWithAuth('/admin/summary');
@@ -342,12 +338,9 @@ export const AdminProvider = ({ children }) => {
     await Promise.allSettled([loadCategories(), loadProducts(), loadOrders(), loadUsers()]);
   }, [loadCategories, loadProducts, loadOrders, loadUsers]);
 
-  // ---------------- Efecto inicial ----------------
   useEffect(() => {
     const token = getToken();
     if (token) refreshAll();
-
-    // Cancelar peticiones pendientes al desmontar
     return () => abortControllers.current.forEach(c => c.abort());
   }, [getToken, refreshAll]);
 
@@ -355,23 +348,17 @@ export const AdminProvider = ({ children }) => {
   const value = {
     // Datos
     products, categories, orders, users,
-
     // Loading / Error
     loadingProducts, loadingCategories, loadingOrders, loadingUsers,
     errorProducts, errorCategories, errorOrders, errorUsers,
-
     // Productos
     loadProducts, createProduct, updateProduct, deleteProduct,
-
     // Categorías
     loadCategories, createCategory, updateCategory, deleteCategory,
-
     // Órdenes
     loadOrders, updateOrderStatus, deleteOrder,
-
     // Usuarios
     loadUsers, changeUserRole, toggleUserActive,
-
     // Misc
     getAdminSummary, refreshAll,
   };

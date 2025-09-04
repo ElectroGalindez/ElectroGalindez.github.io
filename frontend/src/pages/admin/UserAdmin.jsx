@@ -5,20 +5,19 @@ import { FaUser, FaEnvelope, FaShieldAlt, FaUsers } from 'react-icons/fa';
 import "../../styles/UserAdmin.css";
 
 function UserAdmin() {
-  const { users, loading, updateUserRole, loadUsers } = useAdmin(); 
+  const { users, loading, loadUsers, changeUserRole } = useAdmin(); 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const usersPerPage = 10;
 
   useEffect(() => {
-    if (users.length === 0 && !loading) {
+    if ((!users || users.length === 0) && !loading) {
       loadUsers();
-      
     }
-  }, [users.length, loading, loadUsers]);
+  }, [users, loading, loadUsers]);
 
   const filteredUsers = useMemo(() => {
-    return users.filter(user =>
+    return (users || []).filter(user =>
       user.email?.toLowerCase().includes(search.toLowerCase()) ||
       user._id?.includes(search) ||
       user.role?.toLowerCase().includes(search.toLowerCase())
@@ -33,8 +32,9 @@ function UserAdmin() {
   }, [filteredUsers, page, usersPerPage]);
 
   const handleRoleChange = async (id, newRole) => {
+    if (!changeUserRole) return console.error("changeUserRole no está definido");
     try {
-      await updateUserRole(id, newRole);
+      await changeUserRole(id, newRole);
     } catch (error) {
       console.error("Error updating role:", error);
     }
@@ -56,7 +56,6 @@ function UserAdmin() {
         <p>Administra los roles y permisos de los usuarios de la tienda.</p>
       </header>
 
-      {/* Barra de búsqueda */}
       <div className="user-toolbar">
         <div className="search-wrapper">
           <FaUser className="search-icon" />
@@ -64,17 +63,13 @@ function UserAdmin() {
             type="text"
             placeholder="Buscar por email, ID o rol..."
             value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             disabled={loading}
             aria-label="Buscar usuario"
           />
         </div>
       </div>
 
-      {/* Tabla */}
       <div className="user-table-container">
         <table className="user-table">
           <thead>
@@ -120,7 +115,6 @@ function UserAdmin() {
         </table>
       </div>
 
-      {/* Paginación */}
       {totalPages > 1 && (
         <div className="pagination">
           <button
