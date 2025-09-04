@@ -1,5 +1,4 @@
-// src/context/StoreContext.jsx
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 
 const StoreContext = createContext();
 
@@ -13,180 +12,158 @@ export const StoreProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [featured, setFeatured] = useState([]);
-  const [filteredProducts, setFilteredProducts] = useState([]);
-  const [loading, setLoading] = useState({
-    products: false,
-    categories: false,
-    featured: false
-  });
+  const [loading, setLoading] = useState({ products: false, categories: false, featured: false });
   const [error, setError] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
-  const [wishlist, setWishlist] = useState([]); // ✅ Wishlist
+  const [wishlist, setWishlist] = useState([]);
 
   const API_BASE = 'http://localhost:3001/api';
 
-  // ✅ Persistencia: cargar wishlist desde localStorage
+  // Persistencia de wishlist
   useEffect(() => {
     try {
       const saved = localStorage.getItem('wishlist');
-      if (saved) {
-        setWishlist(JSON.parse(saved));
-      }
+      if (saved) setWishlist(JSON.parse(saved));
     } catch (e) {
-      console.warn('No se pudo cargar la lista de deseos de localStorage');
+      console.warn('No se pudo cargar la wishlist de localStorage');
     }
   }, []);
 
-  // ✅ Persistencia: guardar en localStorage cuando cambia
   useEffect(() => {
     try {
       localStorage.setItem('wishlist', JSON.stringify(wishlist));
     } catch (e) {
-      console.warn('No se pudo guardar la lista de deseos en localStorage');
+      console.warn('No se pudo guardar la wishlist en localStorage');
     }
   }, [wishlist]);
 
-  const fetchWithAuth = async (endpoint) => {
+  const fetchWithAuth = useCallback(async (endpoint) => {
     try {
-      const response = await fetch(`${API_BASE}${endpoint}`, {
+      const res = await fetch(`${API_BASE}${endpoint}`, {
         headers: { 'Content-Type': 'application/json' },
       });
-
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-
-      return await response.json();
+      if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+      return await res.json();
     } catch (err) {
-      const message = err.message.includes('Failed to fetch')
+      const msg = err.message.includes('Failed to fetch')
         ? 'No se pudo conectar al servidor'
         : err.message;
-
-      console.error(`[StoreContext] Error en ${endpoint}:`, message);
-      throw new Error(message);
+      console.error(`[StoreContext] Error en ${endpoint}:`, msg);
+      throw new Error(msg);
     }
-  };
+  }, []);
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     if (loading.products) return;
     setLoading(prev => ({ ...prev, products: true }));
     try {
       const data = await fetchWithAuth('/products');
-      const productsArray = Array.isArray(data) ? data : data.products || [];
-      setProducts(productsArray);
-      setFilteredProducts([]);
+      setProducts(Array.isArray(data) ? data : data.products || []);
       setError(null);
     } catch (err) {
-      if (products.length === 0) {
-        setError(err.message);
-      }
+      if (products.length === 0) setError(err.message);
     } finally {
       setLoading(prev => ({ ...prev, products: false }));
     }
-  };
+  }, [fetchWithAuth, loading.products, products.length]);
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     if (loading.categories) return;
     setLoading(prev => ({ ...prev, categories: true }));
     try {
       const data = await fetchWithAuth('/categories');
-      const categoriesArray = Array.isArray(data) ? data : data.categories || [];
-      setCategories(categoriesArray);
+      setCategories(Array.isArray(data) ? data : data.categories || []);
     } catch (err) {
       console.warn('[StoreContext] No se pudieron cargar categorías:', err.message);
     } finally {
       setLoading(prev => ({ ...prev, categories: false }));
     }
-  };
+  }, [fetchWithAuth, loading.categories]);
 
-  const fetchFeatured = async () => {
+  const fetchFeatured = useCallback(async () => {
     if (loading.featured) return;
     setLoading(prev => ({ ...prev, featured: true }));
     try {
       const data = await fetchWithAuth('/products/featured');
-      const featuredArray = Array.isArray(data) ? data : [];
-      setFeatured(featuredArray);
+      setFeatured(Array.isArray(data) ? data : []);
     } catch (err) {
       console.warn('[StoreContext] No se pudieron cargar productos destacados:', err.message);
       setFeatured([]);
     } finally {
       setLoading(prev => ({ ...prev, featured: false }));
     }
-  };
+  }, [fetchWithAuth, loading.featured]);
 
-  // ✅ Limpia el filtro y la categoría seleccionada
-  const clearFilter = useCallback(() => {
-    setFilteredProducts([]);
-    setSelectedCategory(null);
-  }, []);
-
-  // ✅ Filtra productos por categoría
   const filterByCategory = useCallback((categoryId) => {
-    if (!categoryId) {
-      clearFilter();
-      return;
-    }
-    const filtered = products.filter(p => p.category?._id === categoryId);
-    setFilteredProducts(filtered);
-    setSelectedCategory(categoryId);
-  }, [products, clearFilter]);
-
-  // ✅ Wishlist: Añadir producto
-  const addToWishlist = useCallback((product) => {
-    setWishlist(prev => {
-      if (prev.some(p => p._id === product._id)) return prev;
-      return [...prev, product];
-    });
+    setSelectedCategory(categoryId || null);
   }, []);
 
-  // ✅ Wishlist: Eliminar producto
+  const clearFilter = useCallback(() => setSelectedCategory(null), []);
+
+  const addToWishlist = useCallback((product) => {
+    setWishlist(prev => prev.some(p => p._id === product._id) ? prev : [...prev, product]);
+  }, []);
+
   const removeFromWishlist = useCallback((productId) => {
     setWishlist(prev => prev.filter(p => p._id !== productId));
   }, []);
 
-  // ✅ Wishlist: Verificar si un producto está en la lista
   const isProductInWishlist = useCallback((productId) => {
     return wishlist.some(p => p._id === productId);
   }, [wishlist]);
 
-  // ✅ Carga inicial
-  useEffect(() => {
-    fetchProducts();
-    fetchCategories();
-    fetchFeatured();
-  }, []);
+  const filteredProducts = useMemo(() => {
+    if (!selectedCategory) return products;
+    return products.filter(p => p.category?._id === selectedCategory);
+  }, [products, selectedCategory]);
 
-  const value = {
-    // Datos
+  const getProductById = useCallback((id) => {
+    return [...products, ...featured].find(p => p._id === id);
+  }, [products, featured]);
+
+  const contextValue = useMemo(() => ({
     products,
     categories,
     featured,
     filteredProducts,
-    wishlist, // ✅ Expuesta
-
-    // Estado
+    wishlist,
     loading,
     error,
     selectedCategory,
-
-    // Funciones
     refreshProducts: fetchProducts,
     refreshCategories: fetchCategories,
     refreshFeatured: fetchFeatured,
     filterByCategory,
     clearFilter,
-    getProductById: (id) => [...products, ...featured].find(p => p._id === id),
-
-    // Wishlist
-    wishlist,
+    getProductById,
     addToWishlist,
     removeFromWishlist,
     isProductInWishlist,
-  };
+  }), [
+    products,
+    categories,
+    featured,
+    filteredProducts,
+    wishlist,
+    loading,
+    error,
+    selectedCategory,
+    fetchProducts,
+    fetchCategories,
+    fetchFeatured,
+    filterByCategory,
+    clearFilter,
+    getProductById,
+    addToWishlist,
+    removeFromWishlist,
+    isProductInWishlist,
+  ]);
 
-  return (
-    <StoreContext.Provider value={value}>
-      {children}
-    </StoreContext.Provider>
-  );
+  useEffect(() => {
+    fetchProducts();
+    fetchCategories();
+    fetchFeatured();
+  }, [fetchProducts, fetchCategories, fetchFeatured]);
+
+  return <StoreContext.Provider value={contextValue}>{children}</StoreContext.Provider>;
 };

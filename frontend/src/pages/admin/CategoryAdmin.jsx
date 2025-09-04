@@ -1,85 +1,94 @@
 // src/components/admin/CategoryAdmin.jsx
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useAdmin } from '../../context/AdminContext';
-import { FaEdit, FaTrash, FaImage, FaLink, FaPlus, FaFolder } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaImage, FaLink, FaPlus } from 'react-icons/fa';
 import '../../styles/CategoryAdmin.css';
 
 const CategoryAdmin = () => {
-  const { 
-    categories, 
-    createCategory, 
-    updateCategory, 
-    deleteCategory, 
-    loading,
+  const {
+    categories,
+    createCategory,
+    updateCategory,
+    deleteCategory,
+    loading
   } = useAdmin();
 
   const [search, setSearch] = useState('');
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
+    id: null,
     name: '',
     description: '',
-    image_url: '',
-    id: null,
+    image_url: ''
   });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [formErrors, setFormErrors] = useState({});
 
-  // ✅ Asegurar que categories sea un array
+  // ✅ Validación de datos
   const safeCategories = Array.isArray(categories) ? categories : [];
 
-  // ✅ Filtrar categorías
+  // ✅ Filtrado optimizado
   const filteredCategories = useMemo(() => {
     if (!search.trim()) return safeCategories;
+    const term = search.toLowerCase().trim();
     return safeCategories.filter(c => {
       if (!c) return false;
-      const nameMatch = c.name?.toLowerCase().includes(search.toLowerCase()) || false;
-      const descMatch = c.description?.toLowerCase().includes(search.toLowerCase()) || false;
-      return nameMatch || descMatch;
+      return (
+        c.name?.toLowerCase().includes(term) ||
+        c.description?.toLowerCase().includes(term)
+      );
     });
   }, [safeCategories, search]);
 
-  // ✅ Función para evitar caché de imágenes
-  const getImageUrl = (url) => {
-    if (!url) return '/placeholder-category.png';
-    const hasQuery = url.includes('?');
-    const separator = hasQuery ? '&' : '?';
-    return `${url}${separator}v=${Date.now()}`;
-  };
-
-  // ✅ Limpiar URL al desmontar o cambiar
+  // ✅ Limpieza de URL de objeto al desmontar
   useEffect(() => {
     return () => {
       if (imagePreview && imagePreview.startsWith('blob:')) {
         URL.revokeObjectURL(imagePreview);
       }
     };
-  }, [imagePreview]);
+  }, []); // ✅ Solo al desmontar
 
-  const handleChange = (e) => {
+  // ✅ Manejo de cambios en inputs
+  const handleChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     if (formErrors[name]) {
       setFormErrors(prev => ({ ...prev, [name]: null }));
     }
-  };
+  }, [formErrors]);
 
-  const handleImageFileChange = (e) => {
+  // ✅ Subida de archivo
+  const handleImageFileChange = useCallback((e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      setFormErrors(prev => ({ ...prev, image: 'Solo se permiten imágenes' }));
-      return;
+      return setFormErrors(prev => ({ 
+        ...prev, 
+        image: 'Solo se permiten imágenes (jpg, png, jpeg, gif)' 
+      }));
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      setFormErrors(prev => ({ ...prev, image: 'La imagen no debe superar 5MB' }));
-      return;
+      return setFormErrors(prev => ({ 
+        ...prev, 
+        image: 'La imagen no debe superar 5MB' 
+      }));
     }
 
-    // ✅ Liberar la URL anterior
+    // ✅ Validación del tipo de archivo
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+    if (!validTypes.includes(file.type)) {
+      return setFormErrors(prev => ({ 
+        ...prev, 
+        image: 'Formato de imagen no soportado' 
+      }));
+    }
+
+    // Liberar URL anterior SOLO si es blob
     if (imagePreview && imagePreview.startsWith('blob:')) {
       URL.revokeObjectURL(imagePreview);
     }
@@ -89,12 +98,13 @@ const CategoryAdmin = () => {
     setImagePreview(objectUrl);
     setFormData(prev => ({ ...prev, image_url: '' }));
     setFormErrors(prev => ({ ...prev, image: null }));
-  };
+  }, [imagePreview]);
 
-  const handleImageUrlChange = (e) => {
+  // ✅ Uso de URL externa
+  const handleImageUrlChange = useCallback((e) => {
     const url = e.target.value.trim();
-    
-    // ✅ Si había una URL de archivo, liberarla
+
+    // Liberar URL anterior si es blob
     if (imagePreview && imagePreview.startsWith('blob:')) {
       URL.revokeObjectURL(imagePreview);
     }
@@ -103,36 +113,53 @@ const CategoryAdmin = () => {
     setImageFile(null);
     setImagePreview(url);
     setFormErrors(prev => ({ ...prev, image: null }));
-  };
+  }, [imagePreview]);
 
-  const validateForm = () => {
+  // ✅ Validación del formulario
+  const validateForm = useCallback(() => {
     const newErrors = {};
     const name = formData.name?.trim();
-    if (!name) {
-      newErrors.name = 'El nombre es requerido';
-    }
+
+    if (!name) newErrors.name = 'Nombre requerido';
 
     if (!imageFile && !formData.image_url?.trim()) {
-      newErrors.image = 'Requiere una imagen (archivo o URL)';
+      newErrors.image = 'Requiere una imagen';
     }
 
     setFormErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
+  }, [formData, imageFile]);
 
-  const handleSubmit = async (e) => {
+  // ✅ Reset del formulario
+  const resetForm = useCallback(() => {
+    setFormData({
+      id: null,
+      name: '',
+      description: '',
+      image_url: ''
+    });
+    setImageFile(null);
+    
+    // Liberar URL anterior
+    if (imagePreview && imagePreview.startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreview);
+    }
+    
+    setImagePreview('');
+    setIsEditing(false);
+    setFormErrors({});
+  }, [imagePreview]);
+
+  // ✅ Envío del formulario
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     setError(null);
 
     if (!validateForm()) return;
 
     const categoryData = new FormData();
-    const name = formData.name.trim();
-    categoryData.append('name', name);
-
-    if (formData.description) {
-      categoryData.append('description', formData.description);
-    }
+    categoryData.append('name', formData.name.trim());
+    categoryData.append('description', formData.description.trim());
 
     if (imageFile) {
       categoryData.append('image', imageFile);
@@ -146,27 +173,24 @@ const CategoryAdmin = () => {
       } else {
         await createCategory(categoryData);
       }
-
-      // ✅ Resetear
-      setFormData({ name: '', description: '', image_url: '', id: null });
-      setImageFile(null);
-      
-      // ✅ Liberar la URL actual
-      if (imagePreview && imagePreview.startsWith('blob:')) {
-        URL.revokeObjectURL(imagePreview);
-      }
-      
-      setImagePreview('');
-      setIsEditing(false);
-      setFormErrors({});
+      resetForm();
     } catch (err) {
-      console.error('Error al guardar categoría:', err);
+      console.error('❌ Error al guardar categoría:', err);
       setError(`Error: ${err.message}`);
     }
-  };
+  }, [
+    formData,
+    imageFile,
+    isEditing,
+    validateForm,
+    createCategory,
+    updateCategory,
+    resetForm
+  ]);
 
-  const handleEdit = (category) => {
-    // ✅ Liberar la URL anterior antes de editar
+  // ✅ Editar categoría
+  const handleEdit = useCallback((category) => {
+    // Liberar URL anterior
     if (imagePreview && imagePreview.startsWith('blob:')) {
       URL.revokeObjectURL(imagePreview);
     }
@@ -175,28 +199,30 @@ const CategoryAdmin = () => {
       id: category._id,
       name: category.name || '',
       description: category.description || '',
-      image_url: category.image_url || '',
+      image_url: category.image || ''
     });
-    setImagePreview(category.image_url || '');
+    setImagePreview(category.image || '');
     setImageFile(null);
     setIsEditing(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, [imagePreview]);
 
-  const handleDelete = async (id) => {
+  // ✅ Eliminar categoría
+  const handleDelete = useCallback(async (id) => {
     if (!window.confirm('¿Eliminar esta categoría? Esta acción no se puede deshacer.')) return;
     try {
       await deleteCategory(id);
+      setError(null);
     } catch (err) {
       setError('Error al eliminar la categoría.');
     }
-  };
+  }, [deleteCategory]);
 
-  // ✅ Mostrar loading solo si está cargando Y no hay datos
-  if (loading && safeCategories.length === 0) {
+  // ✅ Renderizado de carga
+  if (loading) {
     return (
-      <div className="category-admin loading">
-        <FaFolder size={40} className="spinner-icon" />
+      <div className="category-admin loading" aria-busy="true">
+        <FaImage size={40} className="spinner-icon" />
         <p>Cargando categorías...</p>
       </div>
     );
@@ -214,7 +240,7 @@ const CategoryAdmin = () => {
         <h2>{isEditing ? 'Editar Categoría' : 'Nueva Categoría'}</h2>
         {error && <div className="alert error">{error}</div>}
 
-        <form onSubmit={handleSubmit} className="category-form">
+        <form onSubmit={handleSubmit} className="category-form" noValidate>
           <div className="form-grid">
             <div className="form-group">
               <label htmlFor="name">Nombre *</label>
@@ -222,12 +248,24 @@ const CategoryAdmin = () => {
                 type="text"
                 id="name"
                 name="name"
-                value={formData.name || ''}
+                value={formData.name}
                 onChange={handleChange}
                 placeholder="Nombre de la categoría"
                 aria-invalid={!!formErrors.name}
               />
               {formErrors.name && <span className="error-text">{formErrors.name}</span>}
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="description">Descripción</label>
+              <textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                rows="3"
+                placeholder="Escribe una descripción opcional..."
+              />
             </div>
 
             {/* Subir imagen */}
@@ -238,13 +276,15 @@ const CategoryAdmin = () => {
                 onClick={() => document.getElementById('imageFile').click()}
               >
                 {imagePreview ? (
-                  <img 
-                    key={imagePreview} // ✅ Fuerza re-render
-                    src={getImageUrl(imagePreview)} // ✅ Evita caché
-                    alt="Vista previa" 
-                    className="preview" 
+                  <img
+                    src={imagePreview}
+                    alt="Vista previa"
+                    className="preview"
                     onLoad={() => console.log('✅ Imagen cargada')}
-                    onError={(e) => { e.target.src = '/placeholder-category.png'; }}
+                    onError={(e) => { 
+                      e.target.src = '/placeholders/fallback.png'; 
+                      console.error('❌ Error al cargar imagen:', e.target.src);
+                    }}
                   />
                 ) : (
                   <div className="upload-placeholder">
@@ -272,7 +312,7 @@ const CategoryAdmin = () => {
                   type="url"
                   id="image_url"
                   name="image_url"
-                  value={formData.image_url || ''}
+                  value={formData.image_url}
                   onChange={handleImageUrlChange}
                   placeholder="https://ejemplo.com/imagen.jpg"
                 />
@@ -282,18 +322,6 @@ const CategoryAdmin = () => {
 
           {formErrors.image && <span className="error-text full">{formErrors.image}</span>}
 
-          <div className="form-group full">
-            <label htmlFor="description">Descripción</label>
-            <textarea
-              id="description"
-              name="description"
-              value={formData.description || ''}
-              onChange={handleChange}
-              rows="3"
-              placeholder="Escribe una descripción detallada..."
-            />
-          </div>
-
           <div className="form-actions">
             <button type="submit" className="btn primary">
               {isEditing ? 'Actualizar Categoría' : 'Agregar Categoría'}
@@ -302,21 +330,7 @@ const CategoryAdmin = () => {
               <button
                 type="button"
                 className="btn secondary"
-                onClick={() => {
-                  // ✅ Liberar URL al cancelar
-                  if (imagePreview && imagePreview.startsWith('blob:')) {
-                    URL.revokeObjectURL(imagePreview);
-                  }
-                  setFormData({
-                    name: '',
-                    description: '',
-                    image_url: '',
-                    id: null,
-                  });
-                  setImageFile(null);
-                  setImagePreview('');
-                  setIsEditing(false);
-                }}
+                onClick={resetForm}
               >
                 Cancelar
               </button>
@@ -334,13 +348,14 @@ const CategoryAdmin = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="table-search"
+            aria-label="Buscar categorías"
           />
         </div>
 
         <div className="category-list">
           {filteredCategories.length === 0 ? (
             <div className="empty-state">
-              <FaFolder size={40} color="#ccc" />
+              <FaImage size={40} color="#ccc" />
               <p>
                 {safeCategories.length === 0
                   ? 'No hay categorías disponibles. Agrega una nueva.'
@@ -352,10 +367,13 @@ const CategoryAdmin = () => {
               <div key={category._id} className="category-card">
                 <div className="category-image">
                   <img
-                    src={getImageUrl(category.image_url)} // ✅ Evita caché
+                    src={category.image || '/placeholders/fallback.png'}
                     alt={category.name || 'Categoría'}
                     loading="lazy"
-                    onError={(e) => { e.target.src = '/placeholder-category.png'; }}
+                    onError={(e) => { 
+                      e.target.src = '/placeholders/fallback.png'; 
+                      console.error(`❌ Imagen no encontrada: ${category.image}`);
+                    }}
                   />
                 </div>
                 <div className="category-info">
@@ -389,4 +407,4 @@ const CategoryAdmin = () => {
   );
 };
 
-export default CategoryAdmin;
+export default React.memo(CategoryAdmin);

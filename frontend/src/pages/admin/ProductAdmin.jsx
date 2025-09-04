@@ -1,7 +1,7 @@
 // src/components/admin/ProductAdmin.jsx
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useAdmin } from '../../context/AdminContext';
-import { FaEdit, FaTrash, FaImage, FaLink, FaPlus, FaBoxOpen } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaImage, FaLink, FaPlus, FaBoxOpen, FaTag } from 'react-icons/fa';
 import '../../styles/ProductAdmin.css';
 
 const ProductAdmin = () => {
@@ -20,9 +20,11 @@ const ProductAdmin = () => {
     id: null,
     name: '',
     price: '',
+    originalPrice: '', // ✅ Precio original (tachado)
     description: '',
     image_url: '',
-    category_id: ''
+    category_id: '',
+    onSale: false // ✅ Indicador de oferta
   });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
@@ -57,8 +59,9 @@ const ProductAdmin = () => {
 
   // ✅ Manejo de cambios en inputs
   const handleChange = useCallback((e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    const val = type === 'checkbox' ? checked : value;
+    setFormData(prev => ({ ...prev, [name]: val }));
     if (formErrors[name]) {
       setFormErrors(prev => ({ ...prev, [name]: null }));
     }
@@ -108,9 +111,13 @@ const ProductAdmin = () => {
     const newErrors = {};
     const name = formData.name?.trim();
     const price = parseFloat(formData.price);
+    const originalPrice = parseFloat(formData.originalPrice || 0);
 
     if (!name) newErrors.name = 'Nombre requerido';
     if (!price || isNaN(price) || price <= 0) newErrors.price = 'Precio inválido';
+    if (formData.onSale && (!originalPrice || originalPrice <= price)) {
+      newErrors.originalPrice = 'El precio original debe ser mayor al precio en oferta';
+    }
     if (!formData.category_id) newErrors.category_id = 'Selecciona una categoría';
     if (!imageFile && !formData.image_url?.trim()) newErrors.image = 'Requiere una imagen';
 
@@ -124,9 +131,11 @@ const ProductAdmin = () => {
       id: null,
       name: '',
       price: '',
+      originalPrice: '',
       description: '',
       image_url: '',
-      category_id: ''
+      category_id: '',
+      onSale: false
     });
     setImageFile(null);
     if (imagePreview && imagePreview.startsWith('blob:')) {
@@ -149,6 +158,10 @@ const ProductAdmin = () => {
     productData.append('price', formData.price);
     productData.append('description', formData.description.trim());
     productData.append('category', formData.category_id);
+    productData.append('onSale', formData.onSale);
+    if (formData.onSale) {
+      productData.append('originalPrice', formData.originalPrice);
+    }
 
     if (imageFile) {
       productData.append('image', imageFile);
@@ -187,9 +200,11 @@ const ProductAdmin = () => {
       id: product._id,
       name: product.name || '',
       price: product.price ? product.price.toString() : '',
+      originalPrice: product.originalPrice ? product.originalPrice.toString() : '',
       description: product.description || '',
       image_url: product.images?.[0] || '',
-      category_id: product.category?._id || ''
+      category_id: product.category?._id || '',
+      onSale: product.onSale || false
     });
     setImagePreview(product.images?.[0] || '');
     setImageFile(null);
@@ -256,7 +271,7 @@ const ProductAdmin = () => {
             </div>
 
             <div className="form-group">
-              <label htmlFor="price">Precio (CUP) *</label>
+              <label htmlFor="price">Precio en oferta (CUP) *</label>
               <input
                 type="number"
                 id="price"
@@ -269,6 +284,39 @@ const ProductAdmin = () => {
                 aria-invalid={!!formErrors.price}
               />
               {formErrors.price && <span className="error-text">{formErrors.price}</span>}
+            </div>
+
+            {/* Precio original */}
+            <div className="form-group">
+              <label htmlFor="originalPrice">Precio original (CUP)</label>
+              <div className="input-with-icon">
+                <FaTag size={16} />
+                <input
+                  type="number"
+                  id="originalPrice"
+                  name="originalPrice"
+                  value={formData.originalPrice}
+                  onChange={handleChange}
+                  placeholder="0.00"
+                  step="0.01"
+                  min="0"
+                  disabled={!formData.onSale}
+                />
+              </div>
+              {formErrors.originalPrice && <span className="error-text">{formErrors.originalPrice}</span>}
+            </div>
+
+            {/* Checkbox de oferta */}
+            <div className="form-group">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  name="onSale"
+                  checked={formData.onSale}
+                  onChange={handleChange}
+                />
+                <span>Marcar como en oferta</span>
+              </label>
             </div>
 
             <div className="form-group">
@@ -304,7 +352,10 @@ const ProductAdmin = () => {
                     alt="Vista previa"
                     className="preview"
                     onLoad={() => console.log('✅ Imagen cargada')}
-                    onError={(e) => { e.target.src = '/placeholder.png'; }}
+                    onError={(e) => {
+                      e.target.src = '/placeholders/fallback.png';
+                      console.error('❌ Error al cargar imagen:', e.target.src);
+                    }}
                   />
                 ) : (
                   <div className="upload-placeholder">
@@ -402,16 +453,28 @@ const ProductAdmin = () => {
                 <div key={product._id} className="product-card">
                   <div className="product-image">
                     <img
-                      src={product.images?.[0] || '/placeholder.png'}
+                      src={product.images?.[0] || '/placeholders/fallback.png'}
                       alt={product.name || 'Producto'}
                       loading="lazy"
-                      onError={(e) => { e.target.src = '/placeholder.png'; }}
+                      onError={(e) => {
+                        e.target.src = '/placeholders/fallback.png';
+                        console.error(`❌ Imagen no encontrada: ${product.images?.[0]}`);
+                      }}
                     />
                   </div>
                   <div className="product-info">
                     <h3>{product.name}</h3>
                     <p className="product-category">{category?.name || 'Sin categoría'}</p>
-                    <p className="product-price">{formatPrice(product.price)}</p>
+                    <div className="product-price-container">
+                      {product.onSale && product.originalPrice && (
+                        <span className="original-price">
+                          {formatPrice(product.originalPrice)}
+                        </span>
+                      )}
+                      <span className={`current-price ${product.onSale ? 'on-sale' : ''}`}>
+                        {formatPrice(product.price)}
+                      </span>
+                    </div>
                     <p className="product-desc" title={product.description}>
                       {product.description || 'Sin descripción'}
                     </p>

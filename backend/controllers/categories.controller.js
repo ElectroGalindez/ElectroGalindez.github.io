@@ -11,6 +11,7 @@ exports.getAllCategories = async (req, res) => {
     res.status(500).json({ error: 'Error al obtener categorías' });
   }
 };
+
 // === GET /api/categories/:id ===
 exports.getCategoryById = async (req, res) => {
   const { id } = req.params;
@@ -27,17 +28,20 @@ exports.getCategoryById = async (req, res) => {
 // === POST /api/categories ===
 exports.createCategory = async (req, res) => {
   try {
+    // ✅ Validación segura de req.body
+    if (!req.body) {
+      return res.status(400).json({ error: 'Datos requeridos' });
+    }
+
     const { name, description, image_url } = req.body;
     const image = req.file ? `/uploads/${req.file.filename}` : image_url;
 
-    // ✅ Validación robusta
     if (!name || typeof name !== 'string' || !name.trim()) {
       return res.status(400).json({ error: 'El nombre es requerido' });
     }
 
     const trimmedName = name.trim();
 
-    // ✅ Evitar duplicados
     const existing = await Category.findOne({ 
       name: trimmedName, 
       active: true 
@@ -46,13 +50,13 @@ exports.createCategory = async (req, res) => {
     if (existing) {
       return res.status(400).json({ error: 'Ya existe una categoría con este nombre' });
     }
+
     const existingInactive = await Category.findOne({ 
       name: trimmedName, 
       active: false 
     });
 
     if (existingInactive) {
-      // ✅ Reactivar en lugar de crear
       existingInactive.active = true;
       existingInactive.image = image || null;
       existingInactive.description = description || '';
@@ -60,7 +64,6 @@ exports.createCategory = async (req, res) => {
       return res.status(200).json(saved);
     }
 
-    // ✅ Crear categoría
     const category = new Category({
       name: trimmedName,
       description: description || '',
@@ -83,14 +86,15 @@ exports.createCategory = async (req, res) => {
 // === PUT /api/categories/:id ===
 exports.updateCategory = async (req, res) => {
   const { id } = req.params;
-  const { name, description, active } = req.body;
   try {
+    const { name, description, active } = req.body;
     const image = req.file ? `/uploads/${req.file.filename}` : req.body.image_url;
 
-    const updateData = { name, description, image, active };
-    
-    // Filtrar campos undefined
-    Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
+    const updateData = {};
+    if (name !== undefined) updateData.name = name.trim();
+    if (description !== undefined) updateData.description = description;
+    if (image !== undefined) updateData.image = image;
+    if (active !== undefined) updateData.active = active;
 
     const category = await Category.findByIdAndUpdate(id, updateData, { new: true });
 
