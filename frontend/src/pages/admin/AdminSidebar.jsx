@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { FaHome, FaBox, FaTags, FaUsers, FaClipboardList, FaArrowLeft } from 'react-icons/fa';
+import { FaHome, FaBox, FaTags, FaUsers, FaClipboardList, FaArrowLeft, FaDollarSign } from 'react-icons/fa';
 import '../../styles/AdminSidebar.css';
 
 const menuItems = [
@@ -15,10 +15,11 @@ const menuItems = [
 function AdminSidebar() {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 992);
 
+  // Detectar tamaño de pantalla
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    const handleResize = () => setIsMobile(window.innerWidth < 992);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -32,7 +33,7 @@ function AdminSidebar() {
       {isMobile && (
         <button
           className="admin-sidebar-toggle"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          onClick={() => setIsMobileMenuOpen(prev => !prev)}
           aria-label="Menú de administración"
         >
           ☰
@@ -40,7 +41,7 @@ function AdminSidebar() {
       )}
 
       <aside
-        className={`admin-sidebar ${isMobile && !isMobileMenuOpen ? 'closed' : 'open'}`}
+        className={`admin-sidebar ${isMobile ? (isMobileMenuOpen ? 'open' : 'closed') : 'open'}`}
         role="navigation"
         aria-label="Menú de administración"
       >
@@ -53,7 +54,6 @@ function AdminSidebar() {
               className="logo-image"
               width={200}
               height={60}
-              loading="eager"
               onError={(e) => {
                 e.target.src = '/placeholders/logo-fallback.png';
                 e.target.alt = 'ElectroGalíndez';

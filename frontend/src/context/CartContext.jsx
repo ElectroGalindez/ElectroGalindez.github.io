@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
+import { useApp } from "./AppContext";
+import { useAuth } from "./AuthContext";
 
 const CartContext = createContext();
 
@@ -9,12 +11,18 @@ export const useCart = () => {
 };
 
 export function CartProvider({ children }) {
+  const { user } = useAuth();
+  const { formatPrice } = useApp();
+
   const [cart, setCart] = useState([]);
 
-  // Cargar carrito
+  // Generar key único por usuario para persistencia
+  const storageKey = user ? `cart_${user.id}` : "cart_guest";
+
+  // Cargar carrito desde localStorage
   useEffect(() => {
     try {
-      const savedCart = localStorage.getItem("cart");
+      const savedCart = localStorage.getItem(storageKey);
       if (savedCart) {
         const parsed = JSON.parse(savedCart);
         if (Array.isArray(parsed)) setCart(parsed);
@@ -23,26 +31,29 @@ export function CartProvider({ children }) {
       console.error("Error al cargar el carrito:", error);
       setCart([]);
     }
-  }, []);
+  }, [storageKey]);
 
   // Guardar carrito
   const saveCart = useCallback((newCart) => {
     setCart(newCart);
     try {
-      localStorage.setItem("cart", JSON.stringify(newCart));
+      localStorage.setItem(storageKey, JSON.stringify(newCart));
     } catch (error) {
       console.error("No se pudo guardar el carrito:", error);
     }
-  }, []);
+  }, [storageKey]);
 
-  const addToCart = useCallback((product) => {
+  // Agregar producto (soporte variantes)
+  const addToCart = useCallback((product, variant = {}) => {
     if (!product?._id || typeof product.price !== "number") {
       console.error("Producto inválido para el carrito:", product);
       return;
     }
 
     saveCart(prevCart => {
-      const index = prevCart.findIndex(item => item.id === product._id);
+      const identifier = `${product._id}_${JSON.stringify(variant)}`;
+      const index = prevCart.findIndex(item => item.identifier === identifier);
+
       if (index > -1) {
         const updated = [...prevCart];
         updated[index].quantity += 1;
@@ -51,10 +62,12 @@ export function CartProvider({ children }) {
         return [
           ...prevCart,
           {
+            identifier,
             id: product._id,
             name: product.name,
             price: product.price,
-            image: product.images?.[0] || '/placeholders/product.png',
+            variant,
+            image: product.images?.[0] || "/placeholders/product.png",
             quantity: 1
           }
         ];
@@ -62,16 +75,15 @@ export function CartProvider({ children }) {
     });
   }, [saveCart]);
 
-  const removeFromCart = useCallback((productId) => {
-    saveCart(prevCart => prevCart.filter(item => item.id !== productId));
+  const removeFromCart = useCallback((identifier) => {
+    saveCart(prevCart => prevCart.filter(item => item.identifier !== identifier));
   }, [saveCart]);
 
-  const updateQuantity = useCallback((productId, quantity) => {
-    saveCart(prevCart => {
-      return prevCart
-        .map(item => item.id === productId ? { ...item, quantity: Math.max(1, quantity) } : item)
-        .filter(item => item.quantity > 0);
-    });
+  const updateQuantity = useCallback((identifier, quantity) => {
+    saveCart(prevCart => prevCart
+      .map(item => item.identifier === identifier ? { ...item, quantity: Math.max(1, quantity) } : item)
+      .filter(item => item.quantity > 0)
+    );
   }, [saveCart]);
 
   const clearCart = useCallback(() => saveCart([]), [saveCart]);
@@ -94,8 +106,9 @@ export function CartProvider({ children }) {
     clearCart,
     getTotal,
     getTotalItems,
-    isEmpty
-  }), [cart, addToCart, removeFromCart, updateQuantity, clearCart, getTotal, getTotalItems, isEmpty]);
+    isEmpty,
+    formatPrice: (price) => formatPrice(price)
+  }), [cart, addToCart, removeFromCart, updateQuantity, clearCart, getTotal, getTotalItems, formatPrice]);
 
   return (
     <CartContext.Provider value={contextValue}>

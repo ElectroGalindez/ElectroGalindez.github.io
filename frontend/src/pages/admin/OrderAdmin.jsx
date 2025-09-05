@@ -20,13 +20,12 @@ const formatDate = (dateString) => {
 
 // Enviar mensaje por WhatsApp
 const sendWhatsApp = (order) => {
-  const { _id, user, items, totalAmount } = order;
-  const userName = user?.name || user?.email || 'Cliente';
-  const itemCount = items?.length || 0;
+  const userName = order.user?.name || order.user?.email || order.user || 'Cliente';
+  const itemCount = Array.isArray(order.items) ? order.items.length : 0;
   const message = encodeURIComponent(
     `Hola ${userName},\n\nHas realizado una orden en ElectroGalíndez:\n\n` +
-    `Orden #${_id}\n` +
-    `${itemCount} producto(s) por un total de ${formatPrice(totalAmount)}.\n\n` +
+    `Orden #${order._id ? order._id.slice(-6).toUpperCase() : 'SINID'}\n` +
+    `${itemCount} producto(s) por un total de ${formatPrice(order.totalAmount)}.\n\n` +
     `Por favor, contáctanos para coordinar entrega y pago.\n\nGracias por tu confianza.`
   );
   const whatsappUrl = `https://wa.me/5358956749?text=${message}`;
@@ -34,37 +33,34 @@ const sendWhatsApp = (order) => {
 };
 
 export default function OrderAdmin() {
-  const { orders, deleteOrder, loadOrders, loadingOrders } = useAdmin();
+  const { orders, deleteOrder, refreshAll, loading } = useAdmin();
   const [localLoading, setLocalLoading] = useState(true);
 
-  // Cargar órdenes al montar
   useEffect(() => {
     const fetchOrders = async () => {
       setLocalLoading(true);
       try {
-        await loadOrders();
+        await refreshAll();
       } catch (err) {
         console.error('[OrderAdmin] Error cargando órdenes:', err);
       } finally {
         setLocalLoading(false);
       }
     };
-
     fetchOrders();
-  }, [loadOrders]);
+  }, [refreshAll]);
 
-  // Función para eliminar orden y refrescar lista
   const handleDelete = async (orderId) => {
     if (!window.confirm(`¿Eliminar la orden #${orderId}?`)) return;
     try {
       await deleteOrder(orderId);
-      await loadOrders(); // refrescar lista
+      await refreshAll();
     } catch (err) {
       console.error('[OrderAdmin] Error eliminando orden:', err);
     }
   };
 
-  if (localLoading || loadingOrders) {
+  if (localLoading || loading) {
     return (
       <div className="order-admin loading" aria-live="polite">
         <div className="spinner"></div>
@@ -90,91 +86,94 @@ export default function OrderAdmin() {
       </header>
 
       <section className="order-list">
-        {orders.map((order) => {
-          const orderId = order._id;
-          if (!orderId) return null;
+        {orders
+          .filter(order => order) // solo órdenes definidas
+          .map((order) => {
+            const orderId = order._id || 'SINID';
+            const items = Array.isArray(order.items) ? order.items : [];
+            const totalItems = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+            const userName = order.user?.name || order.user?.email || order.user || 'Cliente';
+            const userEmail = order.user?.email || 'Sin email';
+            const createdAt = formatDate(order.createdAt || order.created_at);
 
-          const items = Array.isArray(order.items) ? order.items : [];
-          const totalItems = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
-          const userEmail = order.user?.email || 'Sin email';
-          const userName = order.user?.name || 'Cliente';
-          const createdAt = formatDate(order.createdAt || order.created_at);
-
-          return (
-            <div key={orderId} className="order-card">
-              {/* Encabezado */}
-              <div className="order-card-header">
-                <div className="order-card-info">
-                  <h3>Orden #{orderId.slice(-6).toUpperCase()}</h3>
-                  <p className="order-user">
-                    <FaUser size={14} /> <strong>{userName}</strong> ({userEmail})
-                  </p>
+            return (
+              <div key={orderId} className="order-card">
+                {/* Encabezado */}
+                <div className="order-card-header">
+                  <div className="order-card-info">
+                    <h3>Orden #{orderId.slice(-6).toUpperCase()}</h3>
+                    <p className="order-user">
+                      <FaUser size={14} /> <strong>{userName}</strong> ({userEmail})
+                    </p>
+                  </div>
+                  <div className="order-card-meta">
+                    <span className="order-date">
+                      <FaCalendarAlt size={14} /> {createdAt}
+                    </span>
+                  </div>
                 </div>
-                <div className="order-card-meta">
-                  <span className="order-date">
-                    <FaCalendarAlt size={14} /> {createdAt}
-                  </span>
+
+                {/* Productos */}
+                <div className="order-items">
+                  <h4>Productos ({totalItems})</h4>
+                  {items.length === 0 ? (
+                    <p className="text-muted">No hay productos en esta orden.</p>
+                  ) : (
+                    <ul className="items-list">
+                      {items.map((item, idx) => {
+                        const product = item.product || {};
+                        const price = parseFloat(item.price || 0);
+                        const quantity = parseInt(item.quantity) || 1;
+                        const total = quantity * price;
+                        const name = product.name || `Producto #${item.product?._id || idx + 1}`;
+
+                        return (
+                          <li key={idx} className="item-row">
+                            <div className="item-info">
+                              <span className="item-name">{name}</span>
+                              <span className="item-details">
+                                {quantity} × {formatPrice(price)}
+                              </span>
+                            </div>
+                            <span className="item-total">{formatPrice(total)}</span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+
+                {/* Detalles adicionales */}
+                <div className="order-extra">
+                  <p><strong>Total:</strong> {formatPrice(order.totalAmount)}</p>
+                  <p><strong>Dirección de envío:</strong> {order.shippingAddress || 'No especificada'}</p>
+                  <p><strong>Método de pago:</strong> {order.paymentMethod || 'No especificado'}</p>
+                  {order.notes && <p><strong>Notas:</strong> {order.notes}</p>}
+                </div>
+
+                {/* Acciones */}
+                <div className="order-actions">
+                  <div className="action-buttons">
+                    <button
+                      onClick={() => sendWhatsApp(order)}
+                      className="btn btn-whatsapp"
+                      aria-label={`Contactar por WhatsApp`}
+                    >
+                      <FaWhatsapp /> WhatsApp
+                    </button>
+
+                    <button
+                      onClick={() => handleDelete(orderId)}
+                      className="btn btn-delete"
+                      aria-label={`Eliminar orden ${orderId}`}
+                    >
+                      <FaTrash />
+                    </button>
+                  </div>
                 </div>
               </div>
-
-              {/* Productos */}
-              <div className="order-items">
-                <h4>Productos ({totalItems})</h4>
-                {items.length === 0 ? (
-                  <p className="text-muted">No hay productos en esta orden.</p>
-                ) : (
-                  <ul className="items-list">
-                    {items.map((item, idx) => {
-                      const product = item.product || item;
-                      const price = parseFloat(product.price || 0);
-                      const quantity = parseInt(item.quantity) || 1;
-                      const total = quantity * price;
-                      const name = product.name || 'Producto sin nombre';
-
-                      return (
-                        <li key={idx} className="item-row">
-                          <div className="item-info">
-                            <span className="item-name">{name}</span>
-                            <span className="item-details">
-                              {quantity} × {formatPrice(price)}
-                            </span>
-                          </div>
-                          <span className="item-total">{formatPrice(total)}</span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
-
-              {/* Total */}
-              <div className="order-total">
-                <strong>Total:</strong> {formatPrice(order.totalAmount || 0)}
-              </div>
-
-              {/* Acciones */}
-              <div className="order-actions">
-                <div className="action-buttons">
-                  <button
-                    onClick={() => sendWhatsApp(order)}
-                    className="btn btn-whatsapp"
-                    aria-label={`Contactar por WhatsApp`}
-                  >
-                    <FaWhatsapp /> WhatsApp
-                  </button>
-
-                  <button
-                    onClick={() => handleDelete(orderId)}
-                    className="btn btn-delete"
-                    aria-label={`Eliminar orden ${orderId}`}
-                  >
-                    <FaTrash />
-                  </button>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+            );
+          })}
       </section>
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo} from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 
 const AppContext = createContext();
 
@@ -40,45 +40,53 @@ const translations = {
   }
 };
 
-// Tasas de conversión (flexible para futuras monedas)
-const conversionRates = {
-  CUP: 1,
-  USD: 0.041, // 1 CUP ≈ 0.041 USD
-  EUR: 0.037
+// Conversión de monedas y configuración de Intl
+const currencies = {
+  CUP: { rate: 1, locale: 'es-CU', symbol: 'CUP' },
+  USD: { rate: 408, locale: 'en-US', symbol: 'USD' },
+  EUR: { rate: 450, locale: 'en-IE', symbol: 'EUR' }
 };
 
 export const AppProvider = ({ children }) => {
   const [language, setLanguage] = useState('es');
   const [currency, setCurrency] = useState('CUP');
 
-  // Cargar preferencias al montar
+  // Cargar preferencias de localStorage de forma segura
   useEffect(() => {
-    const savedLang = localStorage.getItem('appLanguage');
-    const savedCurrency = localStorage.getItem('appCurrency');
-    if (savedLang) setLanguage(savedLang);
-    if (savedCurrency) setCurrency(savedCurrency);
+    try {
+      const savedLang = localStorage.getItem('appLanguage');
+      const savedCurrency = localStorage.getItem('appCurrency');
+      if (savedLang && translations[savedLang]) setLanguage(savedLang);
+      if (savedCurrency && currencies[savedCurrency]) setCurrency(savedCurrency);
+    } catch (err) {
+      console.warn('No se pudo cargar preferencias de localStorage', err);
+    }
   }, []);
 
-  // Guardar preferencias cuando cambien
+  // Guardar preferencias en localStorage de forma segura
   useEffect(() => {
-    localStorage.setItem('appLanguage', language);
-    localStorage.setItem('appCurrency', currency);
+    try {
+      localStorage.setItem('appLanguage', language);
+      localStorage.setItem('appCurrency', currency);
+    } catch (err) {
+      console.warn('No se pudo guardar preferencias de localStorage', err);
+    }
   }, [language, currency]);
 
-  // Formateo de precios
+  // Función para formatear precios
   const formatPrice = useCallback(
     (price) => {
-      const rate = conversionRates[currency] || 1;
+      const { rate, locale, symbol } = currencies[currency] || currencies.CUP;
       const converted = price * rate;
-      return new Intl.NumberFormat(language === 'es' ? 'es-CU' : 'en-US', {
+      return new Intl.NumberFormat(locale, {
         style: 'currency',
-        currency
+        currency: symbol
       }).format(converted);
     },
-    [currency, language]
+    [currency]
   );
 
-  // Traducciones
+  // Función de traducción con fallback
   const t = useCallback(
     (key) => {
       return translations[language]?.[key] || translations['en'][key] || key;
@@ -86,14 +94,10 @@ export const AppProvider = ({ children }) => {
     [language]
   );
 
-  const contextValue = useMemo(() => ({
-    language,
-    setLanguage,
-    currency,
-    setCurrency,
-    formatPrice,
-    t
-  }), [language, currency, formatPrice, t]);
+  const contextValue = useMemo(
+    () => ({ language, setLanguage, currency, setCurrency, formatPrice, t }),
+    [language, currency, formatPrice, t]
+  );
 
   return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;
 };

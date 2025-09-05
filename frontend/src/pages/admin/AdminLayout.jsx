@@ -4,7 +4,7 @@ import { Outlet } from 'react-router-dom';
 import AdminSidebar from './AdminSidebar';
 import '../../styles/AdminLayout.css';
 
-function AdminLayout() {
+export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const toggleSidebar = () => setSidebarOpen(prev => !prev);
@@ -15,26 +15,30 @@ function AdminLayout() {
       <AdminSidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
 
       {/* Overlay para móviles */}
-      {sidebarOpen && <div className="admin-sidebar-overlay" onClick={toggleSidebar}></div>}
+      <div 
+        className={`admin-sidebar-overlay ${sidebarOpen ? 'open' : 'closed'}`} 
+        onClick={toggleSidebar} 
+      />
 
-      {/* Contenido principal */}
-      <div className="admin-main">
+      {/* Main content */}
+      <main className="admin-main">
         <header className="admin-header">
-          <button className="admin-sidebar-toggle" onClick={toggleSidebar}>
+          <button 
+            className="admin-sidebar-toggle" 
+            onClick={toggleSidebar} 
+            aria-label="Toggle sidebar"
+          >
             ☰
           </button>
-          <h2>Panel de Administración</h2>
           <div className="admin-user-actions">
             <span className="admin-user">Admin</span>
           </div>
         </header>
 
-        <main className="admin-content">
+        <div className="admin-content">
           <Outlet />
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }
-
-export default AdminLayout;

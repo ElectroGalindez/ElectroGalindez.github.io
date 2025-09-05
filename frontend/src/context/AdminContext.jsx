@@ -1,369 +1,275 @@
 // src/context/AdminContext.jsx
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { toast } from 'react-toastify';
 
 const AdminContext = createContext(null);
 
 export const useAdmin = () => {
-  const ctx = useContext(AdminContext);
-  if (!ctx) throw new Error('useAdmin debe usarse dentro de AdminProvider');
-  return ctx;
+  const context = useContext(AdminContext);
+  if (!context) throw new Error('useAdmin debe usarse dentro de AdminProvider');
+  return context;
 };
 
-// ---------------- Utilidades ----------------
-const preparePayload = (payload) => {
-  let isFormData = payload instanceof FormData;
-  let bodyToSend = payload;
-
-  if (!isFormData && typeof payload === 'object') {
-    const hasFile = Object.values(payload).some(v => v instanceof File || v instanceof Blob);
-    if (hasFile) {
-      isFormData = true;
-      const fd = new FormData();
-      Object.entries(payload).forEach(([k, v]) => {
-        if (v !== undefined && v !== null) fd.append(k, v);
-      });
-      bodyToSend = fd;
-    }
-  }
-
-  return { body: bodyToSend, isFormData };
-};
-
-const extractData = (res) => {
-  if (!res) return res;
-  if (res.product) return res.product;
-  if (res.products) return res.products;
-  if (res.category) return res.category;
-  if (res.categories) return res.categories;
-  if (res.order) return res.order;
-  if (res.orders) return res.orders;
-  if (res.user) return res.user;
-  if (res.users) return res.users;
-  return res;
-};
-
-// ---------------- Provider ----------------
 export const AdminProvider = ({ children }) => {
-  const { getToken } = useAuth();
-  const API_BASE = 'http://localhost:3001/api';
-
-  // ----- Datos -----
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [orders, setOrders] = useState([]);
   const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  // ----- Loading / Error -----
-  const [loadingProducts, setLoadingProducts] = useState(false);
-  const [loadingCategories, setLoadingCategories] = useState(false);
-  const [loadingOrders, setLoadingOrders] = useState(false);
-  const [loadingUsers, setLoadingUsers] = useState(false);
+  const { getToken } = useAuth();
+  const API_BASE = 'http://localhost:3001/api';
 
-  const [errorProducts, setErrorProducts] = useState(null);
-  const [errorCategories, setErrorCategories] = useState(null);
-  const [errorOrders, setErrorOrders] = useState(null);
-  const [errorUsers, setErrorUsers] = useState(null);
-
-  const abortControllers = useRef([]);
-
-  // ---------------- Fetch con auth ----------------
+  // ---------------- Fetch con Auth ----------------
   const fetchWithAuth = useCallback(async (endpoint, options = {}) => {
+    const { method = 'GET', body = null, isFormData = false } = options;
     const token = getToken();
     if (!token) throw new Error('No autorizado. Inicia sesión nuevamente.');
 
-    const controller = new AbortController();
-    abortControllers.current.push(controller);
-
-    const { method = 'GET', body = null, isFormData = false } = options;
     const headers = new Headers();
     headers.append('Authorization', `Bearer ${token}`);
     if (!isFormData) headers.append('Content-Type', 'application/json');
 
+    const url = `${API_BASE}${endpoint}`;
+    const config = {
+      method,
+      headers,
+      body: body && method !== 'GET' ? (isFormData ? body : JSON.stringify(body)) : undefined,
+    };
+
     try {
-      const res = await fetch(`${API_BASE}${endpoint}`, {
-        method,
-        headers,
-        body: body && method !== 'GET' ? (isFormData ? body : JSON.stringify(body)) : undefined,
-        signal: controller.signal
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
+      const response = await fetch(url, config);
+      if (!response.ok) {
+        const errorText = await response.text();
         let error;
-        try { error = JSON.parse(text)?.error || JSON.parse(text)?.message || text; } catch { error = text; }
-        throw new Error(error || `HTTP ${res.status}`);
+        try {
+          const errorJson = JSON.parse(errorText);
+          error = errorJson.error || errorJson.message || `HTTP ${response.status}`;
+        } catch {
+          error = errorText;
+        }
+        throw new Error(error);
       }
-
-      const contentType = res.headers.get('content-type');
-      if (!contentType?.includes('application/json') || res.status === 204) return { success: true };
-      return await res.json();
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('application/json') || response.status === 204) return { success: true };
+      return await response.json();
     } catch (err) {
-      if (err.name === 'AbortError') return;
       const message = err.message.includes('Failed to fetch')
-        ? '❌ No se pudo conectar al servidor. ¿Está corriendo el backend?'
-        : err.message;
+        ? '❌ No se pudo conectar al servidor. ¿Está corriendo en http://localhost:3001?'
+        : `❌ ${err.message}`;
+      toast.error(message);
       throw new Error(message);
-    } finally {
-      abortControllers.current = abortControllers.current.filter(c => c !== controller);
     }
   }, [getToken]);
 
+  // ---------------- Carga inicial ----------------
+  // ---------------- Carga inicial ----------------
+  const refreshAll = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [catsRes, prodsRes, ordsRes, usersRes] = await Promise.allSettled([
+        fetchWithAuth('/categories'),
+        fetchWithAuth('/products'),
+        fetchWithAuth('/orders'),
+        fetchWithAuth('/users'),
+      ]);
+
+      // Categorías
+      setCategories(Array.isArray(catsRes?.value?.categories) ? catsRes.value.categories :
+                    Array.isArray(catsRes?.value) ? catsRes.value : []);
+
+      // Productos
+      const productsArray = Array.isArray(prodsRes?.value?.products) ? prodsRes.value.products :
+                            Array.isArray(prodsRes?.value) ? prodsRes.value : [];
+      setProducts(productsArray);
+
+      // Órdenes
+      setOrders(Array.isArray(ordsRes?.value?.orders) ? ordsRes.value.orders :
+                Array.isArray(ordsRes?.value) ? ordsRes.value : []);
+
+      // Usuarios
+      setUsers(Array.isArray(usersRes?.value?.users) ? usersRes.value.users :
+              Array.isArray(usersRes?.value) ? usersRes.value : []);
+
+    } catch (err) {
+      toast.error('Error al cargar datos del admin');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchWithAuth]);
+
+
   // ---------------- Productos ----------------
-  const loadProducts = useCallback(async () => {
-    setLoadingProducts(true); setErrorProducts(null);
+  const createProduct = useCallback(async (productData) => {
+    const isFormData = productData instanceof FormData;
+    const name = isFormData ? productData.get('name') : productData?.name;
+    if (!name?.trim()) throw new Error('El nombre es requerido');
+
     try {
-      const res = await fetchWithAuth('/products');
-      const data = extractData(res);
-      setProducts(Array.isArray(data) ? data : []);
-      return data;
+      const data = await fetchWithAuth('/products', { method: 'POST', body: productData, isFormData });
+      const product = data.product || data;
+      setProducts(prev => Array.isArray(prev) ? [...prev, product] : [product]);
+      toast.success('Producto creado correctamente');
+      return product;
     } catch (err) {
-      setErrorProducts(err.message || String(err));
-      toast.error(`Error cargando productos: ${err.message || err}`);
+      toast.error(err.message || 'Error al crear producto');
       throw err;
-    } finally { setLoadingProducts(false); }
+    }
   }, [fetchWithAuth]);
 
-  const createProduct = useCallback(async (payload) => {
-    setLoadingProducts(true);
-    try {
-      if (!payload.name || !payload.price) throw new Error('Nombre y precio son obligatorios');
-      const { body, isFormData } = preparePayload(payload);
-      const res = await fetchWithAuth('/products', { method: 'POST', body, isFormData });
-      const prod = extractData(res);
-      if (prod) setProducts(prev => [prod, ...prev]);
-      toast.success('Producto creado');
-      return prod;
-    } catch (err) {
-      toast.error(`Error al crear producto: ${err.message || err}`);
-      console.error('createProduct error:', err);
-      throw err;
-    } finally { setLoadingProducts(false); }
-  }, [fetchWithAuth]);
-
-  const updateProduct = useCallback(async (id, payload) => {
+  const updateProduct = useCallback(async (id, productData) => {
     if (!id) throw new Error('ID requerido');
-    setLoadingProducts(true);
+    const isFormData = productData instanceof FormData;
+
     try {
-      const { body, isFormData } = preparePayload(payload);
-      const res = await fetchWithAuth(`/products/${id}`, { method: 'PUT', body, isFormData });
-      const updated = extractData(res);
-      if (updated) setProducts(prev => prev.map(p => p._id === id ? updated : p));
-      toast.success('Producto actualizado');
-      return updated;
+      const data = await fetchWithAuth(`/products/${id}`, { method: 'PUT', body: productData, isFormData });
+      const product = data.product || data;
+      setProducts(prev => Array.isArray(prev) ? prev.map(p => (p._id === id ? product : p)) : [product]);
+      toast.success('Producto actualizado correctamente');
+      return product;
     } catch (err) {
-      toast.error(`Error al actualizar producto: ${err.message || err}`);
+      toast.error(err.message || 'Error al actualizar producto');
       throw err;
-    } finally { setLoadingProducts(false); }
+    }
   }, [fetchWithAuth]);
 
   const deleteProduct = useCallback(async (id) => {
     if (!id) throw new Error('ID requerido');
-    setLoadingProducts(true);
     try {
       await fetchWithAuth(`/products/${id}`, { method: 'DELETE' });
-      setProducts(prev => prev.filter(p => p._id !== id));
-      toast.success('Producto eliminado');
-      return true;
+      setProducts(prev => Array.isArray(prev) ? prev.filter(p => p._id !== id) : []);
+      toast.success('Producto eliminado correctamente');
     } catch (err) {
-      toast.error(`Error al eliminar producto: ${err.message || err}`);
-      throw err;
-    } finally { setLoadingProducts(false); }
-  }, [fetchWithAuth]);
-
-  // ---------------- Categorías ----------------
-  const loadCategories = useCallback(async () => {
-    setLoadingCategories(true); setErrorCategories(null);
-    try {
-      const res = await fetchWithAuth('/categories');
-      const data = extractData(res);
-      setCategories(Array.isArray(data) ? data : []);
-      return data;
-    } catch (err) {
-      setErrorCategories(err.message || String(err));
-      toast.error(`Error cargando categorías: ${err.message || err}`);
-      throw err;
-    } finally { setLoadingCategories(false); }
-  }, [fetchWithAuth]);
-
-  const createCategory = useCallback(async (payload) => {
-    setLoadingCategories(true);
-    try {
-      if (!payload.name || !payload.name.trim()) throw new Error('El nombre de la categoría es obligatorio');
-      const { body, isFormData } = preparePayload(payload);
-      const res = await fetchWithAuth('/categories', { method: 'POST', body, isFormData });
-      const cat = extractData(res);
-      if (cat) setCategories(prev => [...prev, cat]);
-      toast.success('Categoría creada');
-      return cat;
-    } catch (err) {
-      toast.error(`Error al crear categoría: ${err.message || err}`);
-      console.error('createCategory error:', err);
-      throw err;
-    } finally { setLoadingCategories(false); }
-  }, [fetchWithAuth]);
-
-  const updateCategory = useCallback(async (id, payload) => {
-    if (!id) throw new Error('ID requerido');
-    setLoadingCategories(true);
-    try {
-      const { body, isFormData } = preparePayload(payload);
-      const res = await fetchWithAuth(`/categories/${id}`, { method: 'PUT', body, isFormData });
-      const updated = extractData(res);
-      if (updated) setCategories(prev => prev.map(c => c._id === id ? updated : c));
-      toast.success('Categoría actualizada');
-      return updated;
-    } catch (err) {
-      toast.error(`Error al actualizar categoría: ${err.message || err}`);
-      throw err;
-    } finally { setLoadingCategories(false); }
-  }, [fetchWithAuth]);
-
-  const deleteCategory = useCallback(async (id) => {
-    if (!id) throw new Error('ID requerido');
-    setLoadingCategories(true);
-    try {
-      await fetchWithAuth(`/categories/${id}`, { method: 'DELETE' });
-      setCategories(prev => prev.filter(c => c._id !== id));
-      toast.success('Categoría eliminada');
-      return true;
-    } catch (err) {
-      toast.error(`Error al eliminar categoría: ${err.message || err}`);
-      throw err;
-    } finally { setLoadingCategories(false); }
-  }, [fetchWithAuth]);
-
-  // ---------------- Órdenes ----------------
-  const loadOrders = useCallback(async () => {
-    setLoadingOrders(true); setErrorOrders(null);
-    try {
-      const res = await fetchWithAuth('/orders');
-      const data = extractData(res);
-      setOrders(Array.isArray(data) ? data : []);
-      return data;
-    } catch (err) {
-      setErrorOrders(err.message || String(err));
-      toast.error(`Error cargando órdenes: ${err.message || err}`);
-      throw err;
-    } finally { setLoadingOrders(false); }
-  }, [fetchWithAuth]);
-
-  const updateOrderStatus = useCallback(async (id, status) => {
-    if (!id) throw new Error('ID requerido');
-    setLoadingOrders(true);
-    try {
-      const res = await fetchWithAuth(`/orders/${id}/status`, { method: 'PATCH', body: { status } });
-      const updated = extractData(res);
-      if (updated) setOrders(prev => prev.map(o => o._id === id ? updated : o));
-      toast.success('Estado de orden actualizado');
-      return updated;
-    } catch (err) {
-      toast.error(`Error al actualizar orden: ${err.message || err}`);
-      throw err;
-    } finally { setLoadingOrders(false); }
-  }, [fetchWithAuth]);
-
-  const deleteOrder = useCallback(async (id) => {
-    if (!id) throw new Error('ID requerido');
-    setLoadingOrders(true);
-    try {
-      await fetchWithAuth(`/orders/${id}`, { method: 'DELETE' });
-      setOrders(prev => prev.filter(o => o._id !== id));
-      toast.success('Orden eliminada');
-      return true;
-    } catch (err) {
-      toast.error(`Error al eliminar orden: ${err.message || err}`);
-      throw err;
-    } finally { setLoadingOrders(false); }
-  }, [fetchWithAuth]);
-
-  // ---------------- Usuarios ----------------
-  const loadUsers = useCallback(async () => {
-    setLoadingUsers(true); setErrorUsers(null);
-    try {
-      const res = await fetchWithAuth('/users');
-      const data = extractData(res);
-      setUsers(Array.isArray(data) ? data : []);
-      return data;
-    } catch (err) {
-      setErrorUsers(err.message || String(err));
-      toast.error(`Error cargando usuarios: ${err.message || err}`);
-      throw err;
-    } finally { setLoadingUsers(false); }
-  }, [fetchWithAuth]);
-
-  const changeUserRole = useCallback(async (id, role) => {
-    if (!id) throw new Error('ID requerido');
-    setLoadingUsers(true);
-    try {
-      const res = await fetchWithAuth(`/users/${id}/role`, { method: 'PUT', body: { role } });
-      const updated = extractData(res);
-      if (updated) setUsers(prev => prev.map(u => u._id === id ? updated : u));
-      toast.success('Rol de usuario actualizado');
-      return updated;
-    } catch (err) {
-      toast.error(`Error al cambiar rol: ${err.message || err}`);
-      throw err;
-    } finally { setLoadingUsers(false); }
-  }, [fetchWithAuth]);
-
-  const toggleUserActive = useCallback(async (id) => {
-    if (!id) throw new Error('ID requerido');
-    setLoadingUsers(true);
-    try {
-      const res = await fetchWithAuth(`/users/${id}/toggle`, { method: 'PATCH' });
-      const updated = extractData(res);
-      if (updated) setUsers(prev => prev.map(u => u._id === id ? updated : u));
-      toast.success('Estado del usuario actualizado');
-      return updated;
-    } catch (err) {
-      toast.error(`Error al activar/desactivar usuario: ${err.message || err}`);
-      throw err;
-    } finally { setLoadingUsers(false); }
-  }, [fetchWithAuth]);
-
-  // ---------------- Resumen y refresh ----------------
-  const getAdminSummary = useCallback(async () => {
-    try {
-      const res = await fetchWithAuth('/admin/summary');
-      return extractData(res);
-    } catch (err) {
-      toast.error(`Error al obtener resumen: ${err.message || err}`);
+      toast.error(err.message || 'Error al eliminar producto');
       throw err;
     }
   }, [fetchWithAuth]);
 
-  const refreshAll = useCallback(async () => {
-    await Promise.allSettled([loadCategories(), loadProducts(), loadOrders(), loadUsers()]);
-  }, [loadCategories, loadProducts, loadOrders, loadUsers]);
+  // ---------------- Categorías ----------------
+  const createCategory = useCallback(async (categoryData) => {
+    const isFormData = categoryData instanceof FormData;
+    const name = isFormData ? categoryData.get('name') : categoryData?.name;
+    if (!name?.trim()) throw new Error('El nombre es requerido');
+
+    try {
+      const data = await fetchWithAuth('/categories', { method: 'POST', body: categoryData, isFormData });
+      const category = data.category || data;
+      setCategories(prev => Array.isArray(prev) ? [...prev, category] : [category]);
+      toast.success('Categoría creada correctamente');
+      return category;
+    } catch (err) {
+      toast.error(err.message || 'Error al crear categoría');
+      throw err;
+    }
+  }, [fetchWithAuth]);
+
+  const updateCategory = useCallback(async (id, categoryData) => {
+    if (!id) throw new Error('ID requerido');
+    const isFormData = categoryData instanceof FormData;
+    try {
+      const data = await fetchWithAuth(`/categories/${id}`, { method: 'PUT', body: categoryData, isFormData });
+      const category = data.category || data;
+      setCategories(prev => Array.isArray(prev) ? prev.map(c => (c._id === id ? category : c)) : [category]);
+      toast.success('Categoría actualizada correctamente');
+      return category;
+    } catch (err) {
+      toast.error(err.message || 'Error al actualizar categoría');
+      throw err;
+    }
+  }, [fetchWithAuth]);
+
+  const deleteCategory = useCallback(async (id) => {
+    if (!id) throw new Error('ID requerido');
+    try {
+      await fetchWithAuth(`/categories/${id}`, { method: 'DELETE' });
+      setCategories(prev => Array.isArray(prev) ? prev.filter(c => c._id !== id) : []);
+      toast.success('Categoría eliminada correctamente');
+    } catch (err) {
+      toast.error(err.message || 'Error al eliminar categoría');
+      throw err;
+    }
+  }, [fetchWithAuth]);
+
+  // ---------------- Órdenes ----------------
+  const updateOrderStatus = useCallback(async (id, status) => {
+    if (!id || !status) throw new Error('ID y estado requeridos');
+    try {
+      const data = await fetchWithAuth(`/orders/${id}/status`, { method: 'PUT', body: { status } });
+      const order = data.order || data;
+      setOrders(prev => Array.isArray(prev) ? prev.map(o => (o._id === id ? order : o)) : [order]);
+      toast.success('Estado de orden actualizado');
+      return order;
+    } catch (err) {
+      toast.error(err.message || 'Error al actualizar orden');
+      throw err;
+    }
+  }, [fetchWithAuth]);
+
+  const deleteOrder = useCallback(async (id) => {
+    if (!id) throw new Error('ID requerido');
+    try {
+      await fetchWithAuth(`/orders/${id}`, { method: 'DELETE' });
+      setOrders(prev => Array.isArray(prev) ? prev.filter(o => o._id !== id) : []);
+      toast.success('Orden eliminada correctamente');
+    } catch (err) {
+      toast.error(err.message || 'Error al eliminar orden');
+      throw err;
+    }
+  }, [fetchWithAuth]);
+
+  // ---------------- Usuarios ----------------
+  const updateUserRole = useCallback(async (id, role) => {
+    if (!id || !['user', 'admin'].includes(role)) throw new Error('ID o rol inválido');
+    try {
+      const data = await fetchWithAuth(`/users/${id}/role`, { method: 'PUT', body: { role } });
+      const user = data.user || data;
+      setUsers(prev => Array.isArray(prev) ? prev.map(u => (u._id === id ? user : u)) : [user]);
+      toast.success('Rol de usuario actualizado');
+      return user;
+    } catch (err) {
+      toast.error(err.message || 'Error al actualizar rol de usuario');
+      throw err;
+    }
+  }, [fetchWithAuth]);
+
+  // ---------------- Dashboard ----------------
+  const getAdminSummary = useCallback(async () => {
+    try {
+      return await fetchWithAuth('/admin/summary');
+    } catch (err) {
+      toast.error('Error al obtener resumen del admin');
+      throw err;
+    }
+  }, [fetchWithAuth]);
 
   useEffect(() => {
-    const token = getToken();
-    if (token) refreshAll();
-    return () => abortControllers.current.forEach(c => c.abort());
-  }, [getToken, refreshAll]);
+    refreshAll();
+  }, [refreshAll]);
 
-  // ---------------- Context value ----------------
-  const value = {
-    // Datos
-    products, categories, orders, users,
-    // Loading / Error
-    loadingProducts, loadingCategories, loadingOrders, loadingUsers,
-    errorProducts, errorCategories, errorOrders, errorUsers,
-    // Productos
-    loadProducts, createProduct, updateProduct, deleteProduct,
-    // Categorías
-    loadCategories, createCategory, updateCategory, deleteCategory,
-    // Órdenes
-    loadOrders, updateOrderStatus, deleteOrder,
-    // Usuarios
-    loadUsers, changeUserRole, toggleUserActive,
-    // Misc
-    getAdminSummary, refreshAll,
-  };
-
-  return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>;
+  return (
+    <AdminContext.Provider value={{
+      products,
+      categories,
+      orders,
+      users,
+      loading,
+      refreshAll,
+      createProduct,
+      updateProduct,
+      deleteProduct,
+      createCategory,
+      updateCategory,
+      deleteCategory,
+      updateOrderStatus,
+      deleteOrder,
+      updateUserRole,
+      getAdminSummary,
+    }}>
+      {children}
+    </AdminContext.Provider>
+  );
 };
 
 export default AdminContext;

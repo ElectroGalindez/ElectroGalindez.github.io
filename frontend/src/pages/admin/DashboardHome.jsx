@@ -1,77 +1,54 @@
 import React, { useEffect, useState } from 'react';
-import { FaUsers, FaBoxOpen, FaReceipt, FaMoneyBillWave } from 'react-icons/fa';
+import { FaUsers, FaBoxOpen, FaTags, FaMoneyBillWave, FaShoppingCart } from 'react-icons/fa';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { useAdmin } from '../../context/AdminContext';
-import { toast } from 'react-toastify';
 import "../../styles/DashboardHome.css";
 
 function DashboardHome() {
-  const { getAdminSummary, refreshAll, users, products, orders } = useAdmin();
+  const { users, products, orders } = useAdmin();
 
   const [summary, setSummary] = useState({
-    users: 0,
-    products: 0,
-    pendingOrders: 0,
-    completedOrders: 0,
+    totalUsers: 0,
+    totalProducts: 0,
+    totalOrders: 0,
     totalIncome: 0,
+    inStockProducts: 0,
     weeklySales: []
   });
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  useEffect(() => {
+    // Validar que existan datos antes de calcular
+    if (!users || !products || !orders) return;
 
-  const fetchSummary = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      // Primero refrescamos datos en AdminContext
-      await refreshAll();
+    const totalUsers = users.length || 0;
+    const totalProducts = products.length || 0;
+    const totalOrders = orders.length || 0;
+    const totalIncome = orders.reduce((sum, order) => sum + (order.totalPrice || 0), 0);
+    const inStockProducts = products.filter(p => p.stock && p.stock > 0).length;
 
-      // Luego obtenemos resumen del backend
-      const data = await getAdminSummary();
+    const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    const weeklySales = days.map(day => {
+      const sales = orders
+        .filter(o => {
+          const orderDay = new Date(o.createdAt).getDay();
+          return orderDay === days.indexOf(day);
+        })
+        .reduce((sum, o) => sum + (o.totalPrice || 0), 0);
+      return { day, sales };
+    });
 
-      setSummary({
-        users: Number(data.users) || users.length || 0,
-        products: Number(data.products) || products.length || 0,
-        pendingOrders: Number(data.pendingOrders) || orders.filter(o => o.status === 'pending').length || 0,
-        completedOrders: Number(data.completedOrders) || orders.filter(o => o.status === 'completed').length || 0,
-        totalIncome: parseFloat(data.totalIncome) || 0,
-        weeklySales: Array.isArray(data.weeklySales) ? data.weeklySales : []
-      });
-    } catch (err) {
-      const msg = err.message || 'Error desconocido';
-      setError(msg);
-      toast.error(`❌ Dashboard: ${msg}`);
-      console.error('[DashboardHome] fetchSummary', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    setSummary({ totalUsers, totalProducts, totalOrders, totalIncome, inStockProducts, weeklySales });
+  }, [users, products, orders]);
 
-  useEffect(() => { fetchSummary(); }, []);
+  const { totalUsers, totalProducts, totalOrders, totalIncome, inStockProducts, weeklySales } = summary;
 
-  // Map dinámico de ventas por día
-  const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-  const salesByDay = days.map(day => {
-    const sale = summary.weeklySales.find(s => s.day === day);
-    return { day, ventas: Number(sale?.sales) || 0 };
-  });
-
-  if (loading) return (
-    <div className="dashboard-home loading" aria-live="polite">
-      <FaBoxOpen size={40} className="loading-icon" />
-      <p>Cargando estadísticas...</p>
-    </div>
-  );
-
-  if (error) return (
-    <div className="dashboard-home error" role="alert">
-      <p><strong>⚠️ Error de conexión</strong><br />{error}</p>
-      <button className="btn-retry" onClick={fetchSummary} aria-label="Reintentar">
-        Reintentar
-      </button>
-    </div>
-  );
+  const cards = [
+    { icon: FaUsers, value: totalUsers, label: 'Usuarios Registrados', className: 'card-users' },
+    { icon: FaBoxOpen, value: totalProducts, label: 'Productos Totales', className: 'card-products' },
+    { icon: FaTags, value: inStockProducts, label: 'Productos en Stock', className: 'card-stock' },
+    { icon: FaShoppingCart, value: totalOrders, label: 'Órdenes Totales', className: 'card-orders' },
+    { icon: FaMoneyBillWave, value: `CUP ${totalIncome.toLocaleString('es-CU', { minimumFractionDigits: 2 })}`, label: 'Ingresos Estimados', className: 'card-income' }
+  ];
 
   return (
     <div className="dashboard-home" aria-labelledby="dashboard-title">
@@ -82,18 +59,13 @@ function DashboardHome() {
 
       {/* Tarjetas resumen */}
       <section className="dashboard-cards" aria-label="Estadísticas generales">
-        {[
-          { icon: FaUsers, value: summary.users.toLocaleString(), label: 'Usuarios Registrados', className: 'card-users' },
-          { icon: FaBoxOpen, value: summary.products.toLocaleString(), label: 'Productos Activos', className: 'card-products' },
-          { icon: FaReceipt, value: summary.pendingOrders.toLocaleString(), label: 'Órdenes Pendientes', className: 'card-orders' },
-          { icon: FaMoneyBillWave, value: `CUP ${summary.totalIncome.toLocaleString('es-CU', { minimumFractionDigits: 2 })}`, label: 'Ingresos Totales', className: 'card-income' }
-        ].map((card, idx) => {
+        {cards.map((card, idx) => {
           const Icon = card.icon;
           return (
             <div key={idx} className={`dashboard-card ${card.className}`}>
               <div className="card-icon"><Icon size={24} /></div>
               <div className="card-content">
-                <h3>{card.value}</h3>
+                <h3>{typeof card.value === 'number' ? card.value.toLocaleString() : card.value}</h3>
                 <p>{card.label}</p>
               </div>
             </div>
@@ -106,26 +78,25 @@ function DashboardHome() {
         <div className="chart-container">
           <h3>Ventas de la Última Semana</h3>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={salesByDay} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+            <BarChart data={weeklySales} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="5 5" opacity={0.1} />
               <XAxis dataKey="day" tick={{ fill: 'var(--text)', fontSize: 13 }} />
               <YAxis tick={{ fill: 'var(--text)', fontSize: 13 }} />
               <Tooltip
                 contentStyle={{
-                  background: 'var(--bg-alt)',
+                  background: 'var(--bg)',
                   border: '1px solid var(--border-color)',
                   borderRadius: '12px',
                   color: 'var(--text)',
                   fontSize: '14px',
                   boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
                 }}
-                formatter={value => [`${value} ventas`, 'Ventas']}
+                formatter={value => [`CUP ${value}`, 'Ventas']}
                 labelFormatter={label => `Día: ${label}`}
               />
               <Bar
-                dataKey="ventas"
+                dataKey="sales"
                 fill="var(--primary)"
-                name="Ventas"
                 radius={[6, 6, 0, 0]}
                 stroke="var(--primary)"
                 strokeWidth={1}

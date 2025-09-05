@@ -1,21 +1,16 @@
 // src/components/UserAdmin.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import { useAdmin } from "../../context/AdminContext";
-import { FaUser, FaEnvelope, FaShieldAlt, FaUsers } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaShieldAlt, FaUsers } from "react-icons/fa";
 import "../../styles/UserAdmin.css";
 
 function UserAdmin() {
-  const { users, loading, loadUsers, changeUserRole } = useAdmin(); 
+  const { users, loading, updateUserRole } = useAdmin(); 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const usersPerPage = 10;
 
-  useEffect(() => {
-    if ((!users || users.length === 0) && !loading) {
-      loadUsers();
-    }
-  }, [users, loading, loadUsers]);
-
+  // ---------------- Filtrado ----------------
   const filteredUsers = useMemo(() => {
     return (users || []).filter(user =>
       user.email?.toLowerCase().includes(search.toLowerCase()) ||
@@ -24,22 +19,24 @@ function UserAdmin() {
     );
   }, [users, search]);
 
+  // ---------------- Paginación ----------------
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
-
   const paginatedUsers = useMemo(() => {
     const startIndex = (page - 1) * usersPerPage;
     return filteredUsers.slice(startIndex, startIndex + usersPerPage);
   }, [filteredUsers, page, usersPerPage]);
 
+  // ---------------- Cambiar rol ----------------
   const handleRoleChange = async (id, newRole) => {
-    if (!changeUserRole) return console.error("changeUserRole no está definido");
+    if (!updateUserRole) return console.error("updateUserRole no está definido");
     try {
-      await changeUserRole(id, newRole);
+      await updateUserRole(id, newRole);
     } catch (error) {
-      console.error("Error updating role:", error);
+      console.error("Error al actualizar rol:", error);
     }
   };
 
+  // ---------------- Render ----------------
   if (loading) {
     return (
       <div className="user-admin loading" aria-live="polite">

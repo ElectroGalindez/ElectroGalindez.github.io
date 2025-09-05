@@ -1,19 +1,20 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 
 const AuthContext = createContext();
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth debe usarse dentro de un AuthProvider");
-  }
+  if (!context) throw new Error("useAuth debe usarse dentro de un AuthProvider");
   return context;
 };
 
 export function AuthProvider({ children }) {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Cargar sesión desde localStorage
   const loadSession = useCallback(() => {
     try {
       const token = localStorage.getItem("token");
@@ -25,7 +26,7 @@ export function AuthProvider({ children }) {
         } else throw new Error("Usuario inválido");
       }
     } catch (error) {
-      console.error("Error al cargar sesión:", error);
+      console.warn("Error al cargar sesión:", error);
       localStorage.removeItem("user");
       localStorage.removeItem("token");
     } finally {
@@ -35,6 +36,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => loadSession(), [loadSession]);
 
+  // Login
   const login = useCallback((userData, token) => {
     if (!token) return console.error("❌ No se puede iniciar sesión sin token");
     if (!userData || (!userData.id && !userData._id)) return console.error("❌ Usuario inválido", userData);
@@ -43,7 +45,8 @@ export function AuthProvider({ children }) {
       id: userData._id || userData.id,
       email: userData.email,
       role: userData.role || 'user',
-      name: userData.name || ''
+      name: userData.name || '',
+      permissions: userData.permissions || [] // opcional para roles avanzados
     };
 
     setUser(userToStore);
@@ -51,33 +54,48 @@ export function AuthProvider({ children }) {
     localStorage.setItem("token", token);
   }, []);
 
+  // Logout
   const logout = useCallback(() => {
     setUser(null);
     localStorage.removeItem("user");
     localStorage.removeItem("token");
-  }, []);
+    navigate("/login");
+  }, [navigate]);
 
+  // Obtener token
   const getToken = useCallback(() => localStorage.getItem("token"), []);
 
-  const requireAuthForPurchase = useCallback((onAuthorized) => {
-    if (user) onAuthorized();
-    else {
+  // Verificar autenticación antes de acción (ej. compra)
+  const requireAuthForPurchase = useCallback(
+    (onAuthorized) => {
+      if (user) return onAuthorized();
       const confirmed = window.confirm(
-        'Debes iniciar sesión para agregar productos al carrito.\n\n¿Quieres ir a iniciar sesión?'
+        "Debes iniciar sesión para agregar productos al carrito.\n\n¿Quieres ir a iniciar sesión?"
       );
-      if (confirmed) window.location.href = '/login';
-    }
-  }, [user]);
+      if (confirmed) navigate("/login");
+    },
+    [user, navigate]
+  );
 
-  const value = React.useMemo(() => ({
-    user,
-    login,
-    logout,
-    getToken,
-    isAuthenticated: !!user,
-    loading,
-    requireAuthForPurchase
-  }), [user, login, logout, getToken, loading, requireAuthForPurchase]);
+  // Verificar permisos específicos
+  const hasPermission = useCallback(
+    (perm) => user?.permissions?.includes(perm),
+    [user]
+  );
+
+  const value = useMemo(
+    () => ({
+      user,
+      login,
+      logout,
+      getToken,
+      isAuthenticated: !!user,
+      loading,
+      requireAuthForPurchase,
+      hasPermission
+    }),
+    [user, login, logout, getToken, loading, requireAuthForPurchase, hasPermission]
+  );
 
   return (
     <AuthContext.Provider value={value}>
