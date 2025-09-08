@@ -3,6 +3,8 @@ import React from 'react';
 import CategoryRow from '../components/CategoryFilter';
 import FeaturedProducts from '../components/FeaturedProducts';
 import WhatsAppButton from '../components/WhatsAppButton';
+import Hero from '../components/Hero';
+import CategoryGrid from "../components/CategoryGrid";
 import '../styles/Home.css';
 
 function Home() {
@@ -14,10 +16,17 @@ function Home() {
         <CategoryRow />
       </section>
 
+      {/* Hero profesional */}
+      <Hero /> {/* <-- agregamos el Hero */}
+
       {/* Productos destacados */}
       <section className="featured-section" aria-labelledby="featured-title">
-        <h2 id="featured-title">Lo Más Solicitado</h2>
         <FeaturedProducts />
+      </section>
+      
+      {/* Grid de categorías */}
+      <section aria-labelledby="category-grid-title" className="category-grid-section">
+        <CategoryGrid />
       </section>
 
       {/* CTA */}

@@ -30,7 +30,7 @@ exports.getOrderById = async (req, res) => {
 exports.createOrder = async (req, res) => {
   try {
     const { items, shippingAddress, paymentMethod, notes } = req.body;
-    const userId = req.user?.id;
+    const userId = req.user?.id || null;
 
     if (!userId) {
       return res.status(401).json({ error: 'Acceso denegado. No estás autenticado.' });

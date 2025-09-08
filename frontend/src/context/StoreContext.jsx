@@ -1,3 +1,4 @@
+// src/context/StoreContext.jsx
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import { useApp } from "./AppContext";
 import { useAuth } from "./AuthContext";
@@ -22,10 +23,9 @@ export const StoreProvider = ({ children }) => {
   const [wishlist, setWishlist] = useState([]);
 
   const API_BASE = "http://localhost:3001/api";
-
-  // --- Wishlist persistente ---
   const storageKey = user ? `wishlist_${user.id}` : "wishlist_guest";
 
+  // --- Wishlist persistente ---
   useEffect(() => {
     try {
       const saved = localStorage.getItem(storageKey);
@@ -56,33 +56,38 @@ export const StoreProvider = ({ children }) => {
     }
   }, []);
 
-  // --- Fetch de productos y categorías ---
-  const fetchProducts = useCallback(async () => {
-    if (loading.products) return;
-    setLoading(prev => ({ ...prev, products: true }));
-    try {
-      const data = await fetchWithAuth("/products");
-      setProducts(Array.isArray(data) ? data : data.products || []);
-      setError(null);
-    } catch (err) {
-      if (products.length === 0) setError(err.message);
-    } finally {
-      setLoading(prev => ({ ...prev, products: false }));
-    }
-  }, [fetchWithAuth, loading.products, products.length]);
+  // --- Fetch inicial de productos y categorías ---
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading({ products: true, categories: true });
+      try {
+        const [productsData, categoriesData] = await Promise.all([
+          fetchWithAuth("/products"),
+          fetchWithAuth("/categories")
+        ]);
 
-  const fetchCategories = useCallback(async () => {
-    if (loading.categories) return;
-    setLoading(prev => ({ ...prev, categories: true }));
-    try {
-      const data = await fetchWithAuth("/categories");
-      setCategories(Array.isArray(data) ? data : data.categories || []);
-    } catch (err) {
-      console.warn("[StoreContext] No se pudieron cargar categorías:", err.message);
-    } finally {
-      setLoading(prev => ({ ...prev, categories: false }));
-    }
-  }, [fetchWithAuth, loading.categories]);
+        const productsArray = Array.isArray(productsData) ? productsData : productsData.products || [];
+        // ✅ Garantizar que cada producto tenga la propiedad `image`
+        const productsWithImage = productsArray.map(p => ({
+          ...p,
+          image: p.image || '/placeholders/product.png'
+        }));
+        setProducts(productsWithImage);
+
+        const categoriesArray = Array.isArray(categoriesData) ? categoriesData : categoriesData.categories || [];
+        setCategories(categoriesArray);
+
+        setError(null);
+
+      } catch (err) {
+        setError(err.message);
+        console.warn("[StoreContext] Error cargando datos iniciales:", err.message);
+      } finally {
+        setLoading({ products: false, categories: false });
+      }
+    };
+    loadData();
+  }, [fetchWithAuth]);
 
   // --- Filtrado por categoría ---
   const filterByCategory = useCallback((categoryId) => setSelectedCategory(categoryId || null), []);
@@ -130,8 +135,11 @@ export const StoreProvider = ({ children }) => {
     loading,
     error,
     selectedCategory,
-    refreshProducts: fetchProducts,
-    refreshCategories: fetchCategories,
+    refreshProducts: () => fetchWithAuth("/products").then(data => {
+      const updated = Array.isArray(data) ? data : data.products || [];
+      setProducts(updated.map(p => ({ ...p, image: p.image || '/placeholders/product.png' })));
+    }),
+    refreshCategories: () => fetchWithAuth("/categories").then(data => setCategories(Array.isArray(data) ? data : data.categories || [])),
     filterByCategory,
     clearFilter,
     getProductById,
@@ -142,8 +150,7 @@ export const StoreProvider = ({ children }) => {
   }), [
     products, categories, filteredProducts, offers,
     wishlist, loading, error, selectedCategory,
-    fetchProducts, fetchCategories,
-    filterByCategory, clearFilter,
+    fetchWithAuth, filterByCategory, clearFilter,
     getProductById, addToWishlist, removeFromWishlist,
     isProductInWishlist, formatProductPrice
   ]);

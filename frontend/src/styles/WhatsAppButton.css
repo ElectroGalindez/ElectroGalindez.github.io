@@ -1,30 +1,97 @@
-/* src/styles/WhatsAppButton.css */
-.whatsapp-float {
+/* Contenedor fijo del botón */
+.whatsapp-wrapper {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  background: #25D366;
-  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  z-index: 9999;
+}
+
+
+/* Botón principal */
+.whatsapp-float {
+  background-color: #25d366;
   border: none;
+  border-radius: 50%;
   width: 60px;
   height: 60px;
-  border-radius: 50%;
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 14px rgba(37, 211, 102, 0.4);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  z-index: 1000;
-  cursor: pointer;
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
 }
 
+/* Efecto hover */
 .whatsapp-float:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 18px rgba(37, 211, 102, 0.5);
+  transform: scale(1.08);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.35);
 }
 
-@media (prefers-reduced-motion: true) {
+/* Tooltip */
+.whatsapp-tooltip {
+  right: 1px;
+  position: absolute;
+  bottom: 70px;
+  background-color: #333;
+  color: #fff;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  padding: 6px 14px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(100px);
+  animation: tooltipIn 0.3s forwards;
+}
+
+@keyframes tooltipIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Estado “En línea” dentro del botón */
+.whatsapp-status {
+  position: absolute;
+  bottom: -14px;
+  background-color: #128c7e;
+  color: #fff;
+  font-size: 0.7rem;
+  padding: 1px 6px;
+  border-radius: 12px;
+  font-weight: 500;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
   .whatsapp-float {
-    transition: none;
+    width: 50px;
+    height: 50px;
+  }
+
+  .whatsapp-tooltip {
+    font-size: 0.8rem;
+    padding: 5px 10px;
+  }
+
+  .whatsapp-status {
+    font-size: 0.65rem;
+    padding: 1px 4px;
+    bottom: -12px;
+  }
+
+  .whatsapp-online {
+    font-size: 0.75rem;
+    padding: 3px 8px;
   }
 }

@@ -1,7 +1,57 @@
-/* src/styles/global.css */
+/* src/index.css */
 
-/* Variables de diseño (ElectroGalíndez) */
+/* ================= RESET BASE ================= */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif);
+  background-color: var(--bg, #fafafa);
+  color: var(--text, #1d1d1f);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  scroll-behavior: smooth;
+}
+
+img, picture, video, canvas, svg {
+  display: block;
+  max-width: 100%;
+}
+
+input, button, textarea, select {
+  font: inherit;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+ul, ol {
+  list-style: none;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 10px;
+}
+
+textarea {
+  resize: vertical;
+}
+
+/* ================= VARIABLES ================= */
 :root {
+  /* Tipografía */
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
   --font-mono: 'Courier New', monospace;
 
@@ -37,23 +87,139 @@
   --transition: all 0.2s ease;
 
   /* Colores */
-  --bg: #242424;
-  --bg-alt: #1c1c1e;
-  --text: #f8f4eb;
-  --text-secondary: #d1d1d6;
-  --border-color: #424245;
+  --bg: #fafafa;
+  --bg-alt: #ffffff;
+  --text: #1d1d1f;
+  --text-secondary: #636366;
+  --border-color: #e5e5e7;
   --primary: #0066cc;
   --primary-hover: #0055aa;
-  --whatsapp: #25D366;
+  --success: #25d366;
+  --error: #e74c3c;
 }
 
-/* Modo claro */
-@media (prefers-color-scheme: light) {
+/* Modo oscuro */
+@media (prefers-color-scheme: dark) {
   :root {
-    --bg: #fafafa;
-    --bg-alt: #ffffff;
-    --text: #1d1d1f;
-    --text-secondary: #636366;
-    --border-color: #e5e5e7;
+    --bg: #242424;
+    --bg-alt: #1c1c1e;
+    --text: #f8f4eb;
+    --text-secondary: #d1d1d6;
+    --border-color: #424245;
   }
+}
+
+/* ================= TIPOGRAFÍA BASE ================= */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+p {
+  margin-bottom: var(--space-4);
+}
+
+strong {
+  font-weight: 600;
+}
+
+small {
+  font-size: var(--text-sm);
+}
+
+/* ================= LINKS ================= */
+a {
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--primary);
+}
+
+/* ================= BOTONES BASE ================= */
+button {
+  border-radius: var(--radius);
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+button:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ================= FORMULARIOS ================= */
+input, select, textarea {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.75rem;
+  font-size: var(--text-base);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+  outline: none;
+}
+
+/* ================= IMÁGENES Y OBJETOS ================= */
+img {
+  border-radius: var(--radius);
+  object-fit: cover;
+}
+
+/* ================= CONTAINER ================= */
+.container {
+  width: 90%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ================= UTILIDADES ================= */
+.flex {
+  display: flex;
+}
+
+.flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.grid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.text-center {
+  text-align: center;
+}
+
+.mb-4 {
+  margin-bottom: var(--space-4);
+}
+
+.mt-4 {
+  margin-top: var(--space-4);
+}
+
+/* ================= SCROLLBAR ================= */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--border-color);
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ================= TRANSICIONES GLOBAL ================= */
+* {
+  transition: var(--transition);
 }

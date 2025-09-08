@@ -12,72 +12,67 @@ const ProductCard = ({ product, category, formatPrice }) => {
     addToWishlist, 
     removeFromWishlist, 
     isProductInWishlist 
-  } = useStore(); // ✅ Importa las 3 funciones
+  } = useStore();
 
   const { requireAuthForPurchase } = useAuth();
   const { addToCart } = useCart();
-  const [isHovered, setIsHovered] = useState(false);
+  const [hovered, setHovered] = useState(false);
 
-  const isInWishlist = isProductInWishlist(product._id);
+  const inWishlist = isProductInWishlist(product._id);
 
-  const handleWishlistToggle = (e) => {
+  const toggleWishlist = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (isInWishlist) {
-      removeFromWishlist(product._id); // ✅ Ahora funciona
-    } else {
-      addToWishlist(product);
-    }
+    if (inWishlist) removeFromWishlist(product._id);
+    else addToWishlist(product);
   };
 
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    requireAuthForPurchase(() => {
-      addToCart(product);
-    });
+    requireAuthForPurchase(() => addToCart(product));
   };
 
   return (
     <div
-      className="product-card"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      className="eg-product-card"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
-      <Link to={`/products/${product._id}`} className="product-card-link">
-        <div className="product-image-container">
+      <Link to={`/products/${product._id}`} className="eg-product-card-link">
+        <div className="eg-product-image-wrapper">
           <img
             src={product.images?.[0] || '/placeholders/product.png'}
             alt={product.name}
             loading="lazy"
             onError={(e) => { e.target.src = '/placeholders/fallback.png'; }}
-            className="product-image"
+            className="eg-product-image"
           />
-          {product.featured && <span className="badge featured">⭐ Destacado</span>}
+          {product.featured && <span className="eg-badge-featured">⭐ Destacado</span>}
           <button
             type="button"
-            className={`wishlist-button ${isInWishlist ? 'in-wishlist' : ''}`}
-            onClick={handleWishlistToggle}
-            aria-label={isInWishlist ? 'Eliminar de destacados' : 'Agregar a destacados'}
+            className={`eg-wishlist-button ${inWishlist ? 'active' : ''}`}
+            onClick={toggleWishlist}
+            aria-label={inWishlist ? 'Eliminar de destacados' : 'Agregar a destacados'}
           >
-            {isInWishlist ? <FaHeart /> : <FaRegHeart />}
+            {inWishlist ? <FaHeart /> : <FaRegHeart />}
           </button>
         </div>
 
-        <div className="product-info">
-          <h3 className="product-name">{product.name}</h3>
-          <p className="product-category">{category?.name || 'Sin categoría'}</p>
-          <p className="product-price">{formatPrice(product.price)}</p>
+        <div className="eg-product-info">
+          <h3 className="eg-product-name">{product.name}</h3>
+          <p className="eg-product-category">{category?.name || 'Sin categoría'}</p>
+          <p className="eg-product-price">{formatPrice(product.price)}</p>
         </div>
       </Link>
 
-      <div className={`product-actions ${isHovered ? 'visible' : ''}`}>
-        <Link to={`/products/${product._id}`} className="btn btn-outline">
+      <div className={`eg-product-actions ${hovered ? 'visible' : ''}`}>
+        <Link to={`/products/${product._id}`} className="eg-btn-outline">
           <FaEye /> Ver detalles
         </Link>
         <button
           type="button"
-          className="btn btn-primary"
+          className="eg-btn-primary"
           onClick={handleAddToCart}
         >
           <FaShoppingCart /> Agregar
